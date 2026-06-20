@@ -1,4 +1,4 @@
-import { Palette, Video, Image as ImageIcon } from 'lucide-react';
+﻿import { Palette, Video, Image as ImageIcon } from 'lucide-react';
 import React from 'react';
 
 export const exchangeRate = 5.75;
@@ -220,12 +220,12 @@ export interface PortfolioItem {
 }
 
 export const artItems: PortfolioItem[] = [
-  { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon className="w-10 h-10" /> , mediaUrl: 'https://res.cloudinary.com/dnbdnjpd4/image/upload/v1781967545/Tame_gkh52r.png' },
-  { type: 'image', color: 'from-yellow-200 to-amber-100', iconColor: 'text-amber-600', icon: <ImageIcon className="w-10 h-10" /> , mediaUrl: 'https://res.cloudinary.com/dnbdnjpd4/image/upload/v1781970379/3_1_kz6hnq.png' },
+  { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon className="w-10 h-10" />  },
+  { type: 'image', color: 'from-yellow-200 to-amber-100', iconColor: 'text-amber-600', icon: <ImageIcon className="w-10 h-10" />  },
   { type: 'image', color: 'from-yellow-200 to-amber-200', iconColor: 'text-yellow-600', icon: <ImageIcon className="w-10 h-10" /> },
   { type: 'image', color: 'from-amber-200 to-orange-100', iconColor: 'text-amber-600', icon: <ImageIcon className="w-10 h-10" /> },
 
-  { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon className="w-10 h-10" />, double: true, mediaUrl: 'https://res.cloudinary.com/dnbdnjpd4/image/upload/v1781970768/photo_2026-06-20_12-51-29_ruflg4.jpg' },
+  { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon className="w-10 h-10" />, double: true },
 ];
 
 export const videoItems: PortfolioItem[] = [
@@ -233,7 +233,7 @@ export const videoItems: PortfolioItem[] = [
 ];
 
 export const nsfwItems: PortfolioItem[] = [
-  { type: 'image', color: 'from-red-200 to-rose-200', iconColor: 'text-red-600', icon: <ImageIcon className="w-10 h-10" /> , mediaUrl: 'https://res.cloudinary.com/dnbdnjpd4/image/upload/v1781970122/photo_2026-06-20_12-38-13_no3ei0.jpg' },
+  { type: 'image', color: 'from-red-200 to-rose-200', iconColor: 'text-red-600', icon: <ImageIcon className="w-10 h-10" />  },
   { type: 'image', color: 'from-rose-200 to-red-200', iconColor: 'text-red-700', icon: <ImageIcon className="w-10 h-10" /> }
 ];
 
