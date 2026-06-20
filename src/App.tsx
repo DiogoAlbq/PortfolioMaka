@@ -32,12 +32,16 @@ import {
 
 interface PlanAddon {
   name: string;
-  price: string;
+  price_brl: number;
+  price_usd: number;
+  type?: string;
 }
 
 interface Plan {
+  id?: string;
   title: string;
-  price: string;
+  price_brl: number;
+  price_usd: number;
   desc?: string;
   popular?: boolean;
   addons: PlanAddon[];
@@ -85,19 +89,19 @@ export default function App() {
   };
 
   const calculatePlanTotal = (plan: Plan, planKey: string) => {
-    const basePrice = parseFloat(plan.price.replace(/[^0-9.]/g, '')) || 0;
+    const basePrice = currency === 'BRL' ? plan.price_brl : plan.price_usd;
     const selected = selectedAddons[planKey] || [];
     
     const addonsTotal = selected.reduce((sum, addonName) => {
       const addon = plan.addons.find((a) => a.name === addonName);
       if (addon) {
-        const addonPrice = parseFloat(addon.price.replace(/[^0-9.]/g, '')) || 0;
+        const addonPrice = currency === 'BRL' ? addon.price_brl : addon.price_usd;
         return sum + addonPrice;
       }
       return sum;
     }, 0);
 
-    return basePrice + addonsTotal;
+    return (basePrice || 0) + addonsTotal;
   };
 
   const [toastMessage, setToastMessage] = useState('');
@@ -106,13 +110,14 @@ export default function App() {
   const handleSelectPlan = async (plan: Plan, planKey: string, totalPrice: number) => {
     const selected = selectedAddons[planKey] || [];
     const tToast = t[language].toast;
+    const basePrice = currency === 'BRL' ? plan.price_brl : plan.price_usd;
 
     const details = [
       tToast.greeting,
       `${tToast.plan}: ${plan.title}`,
-      `${tToast.basePrice}: ${formatPrice(plan.price)} ${currency}`,
+      `${tToast.basePrice}: ${formatPrice(basePrice)} ${currency}`,
       selected.length > 0 ? `${tToast.addons}: ${selected.join(', ')}` : null,
-      `${tToast.total}: ${formatPrice(totalPrice.toString())} ${currency}`
+      `${tToast.total}: ${formatPrice(totalPrice)} ${currency}`
     ].filter(Boolean).join('\n');
 
     try {
@@ -171,19 +176,13 @@ export default function App() {
   }, []);
 
   const tLang = t[language as keyof typeof t];
-  const formatPrice = (priceStr: string) => {
-    // Handle '30+' or '+$15' cases
-    const isAddon = priceStr.startsWith('+');
-    const isPlus = priceStr.endsWith('+');
-    const numericPart = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
-    
-    if (isNaN(numericPart)) return priceStr;
+  const formatPrice = (value: number, isAddon = false) => {
+    if (isNaN(value)) return '';
 
     if (currency === 'BRL') {
-        return (isAddon ? '+' : '') + `R$${numericPart.toFixed(0)}` + (isPlus ? '+' : '');
+        return (isAddon ? '+' : '') + `R$${value.toFixed(0)}`;
     } else {
-        const usd = numericPart / exchangeRate;
-        return (isAddon ? '+' : '') + `$${usd.toFixed(0)}` + (isPlus ? '+' : '');
+        return (isAddon ? '+' : '') + `$${value.toFixed(0)}`;
     }
   };
 
@@ -661,11 +660,9 @@ export default function App() {
                         {plan.desc && <p className={`text-sm mb-4 font-bold border-l-4 border-amber-500 pl-3 transition-colors duration-500 ${theme.subheading}`}>{plan.desc}</p>}
                         <div className="flex items-baseline gap-1 mt-6">
                           <span className={`text-5xl font-black transition-colors duration-500 ${theme.heading}`}>
-                            {formatPrice(totalPrice.toString())}
+                            {formatPrice(totalPrice)}
                           </span>
-                          {!isNaN(parseFloat(plan.price.replace(/[^0-9.]/g, ''))) && (
-                            <span className={`font-black text-xl transition-colors duration-500 ${theme.heading}`}>{currency}</span>
-                          )}
+                          <span className={`font-black text-xl transition-colors duration-500 ${theme.heading}`}>{currency}</span>
                         </div>
                       </div>
 
@@ -676,7 +673,8 @@ export default function App() {
                         <ul className="space-y-4">
                           {plan.addons.map((addon, idx) => {
                             const isSelected = (selectedAddons[planKey] || []).includes(addon.name);
-                            const hasPrice = addon.price && addon.price !== '';
+                            const hasPrice = addon.price_brl !== undefined && addon.price_usd !== undefined;
+                            const addonPriceVal = currency === 'BRL' ? addon.price_brl : addon.price_usd;
                             
                             return (
                               <li 
@@ -698,7 +696,7 @@ export default function App() {
                                 </div>
                                 {hasPrice && (
                                   <span className={`font-black font-mono text-xs border-2 px-2 py-1 transition-colors duration-500 ${isSelected ? 'bg-amber-400 border-slate-900 text-slate-900 shadow-[2px_2px_0px_#1e293b]' : theme.addonPrice}`}>
-                                    {formatPrice(addon.price)}
+                                    {formatPrice(addonPriceVal, true)}
                                   </span>
                                 )}
                               </li>
