@@ -515,7 +515,25 @@ export default function App() {
                   <div className={`absolute inset-0 flex items-center justify-center opacity-80 group-hover:opacity-100 transition-all duration-500 ${item.iconColor}`}>
                     {item.mediaUrl ? (
                       item.type === 'video' ? (
-                        <video src={item.mediaUrl} autoPlay loop muted playsInline className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                        (() => {
+                          const getYouTubeId = (url: string) => {
+                            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+                            const match = url.match(regExp);
+                            return (match && match[2].length === 11) ? match[2] : null;
+                          };
+                          const ytId = getYouTubeId(item.mediaUrl);
+                          return ytId ? (
+                            <iframe 
+                              src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&showinfo=0&rel=0`}
+                              title="YouTube video player" 
+                              frameBorder="0" 
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 pointer-events-none"
+                            ></iframe>
+                          ) : (
+                            <video src={item.mediaUrl} autoPlay loop muted playsInline className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                          );
+                        })()
                       ) : (
                         <img src={item.mediaUrl} alt="Portfolio item" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                       )
