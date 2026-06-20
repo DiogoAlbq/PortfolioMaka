@@ -6,12 +6,30 @@
 $ErrorActionPreference = "Stop"
 $dataFile = Join-Path $PSScriptRoot "src\data.tsx"
 
-# --- Cores para o terminal ---
-function Write-Header { Write-Host "`n========================================" -ForegroundColor Cyan; Write-Host "   MAKA Portfolio Manager" -ForegroundColor Yellow; Write-Host "========================================`n" -ForegroundColor Cyan }
-function Write-Success($msg) { Write-Host "  [OK] $msg" -ForegroundColor Green }
-function Write-Warn($msg) { Write-Host "  [!!] $msg" -ForegroundColor Yellow }
-function Write-Err($msg) { Write-Host "  [ERRO] $msg" -ForegroundColor Red }
+# --- Interface Visual (UI) ---
+function Write-Header { 
+    Clear-Host
+    Write-Host ""
+    Write-Host "  ███╗   ███╗ █████╗ ██╗  ██╗███████╗" -ForegroundColor Cyan
+    Write-Host "  ████╗ ████║██╔══██╗██║ ██╔╝██╔════╝" -ForegroundColor Cyan
+    Write-Host "  ██╔████╔██║███████║█████╔╝ ███████╗" -ForegroundColor Yellow
+    Write-Host "  ██║╚██╔╝██║██╔══██║██╔═██╗ ╚════██║" -ForegroundColor Yellow
+    Write-Host "  ██║ ╚═╝ ██║██║  ██║██║  ██╗███████║" -ForegroundColor Magenta
+    Write-Host "  ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝" -ForegroundColor Magenta
+    Write-Host ""
+    Write-Host "       PORTFOLIO MANAGER v2.0       " -ForegroundColor White -BackgroundColor DarkMagenta
+    Write-Host "========================================" -ForegroundColor DarkGray
+}
+
+function Write-Success($msg) { Write-Host "  [ v ] $msg" -ForegroundColor Green }
+function Write-Warn($msg) { Write-Host "  [ ! ] $msg" -ForegroundColor Yellow }
+function Write-Err($msg) { Write-Host "  [ x ] $msg" -ForegroundColor Red }
 function Write-Sep { Write-Host "  ----------------------------------------" -ForegroundColor DarkGray }
+
+function Pause-Screen {
+    Write-Host ""
+    Read-Host "  Pressione [ENTER] para continuar..." | Out-Null
+}
 
 # --- Leitura do data.tsx ---
 function Get-DataContent {
@@ -24,7 +42,6 @@ function Parse-PortfolioItems {
     param([string]$ArrayName)
     $content = Get-DataContent
     
-    # Captura o bloco do array
     $pattern = "export const ${ArrayName}: PortfolioItem\[\] = \[([\s\S]*?)\];"
     $match = [regex]::Match($content, $pattern)
     if (-not $match.Success) { return @() }
@@ -33,7 +50,6 @@ function Parse-PortfolioItems {
     $items = @()
     $index = 0
     
-    # Encontra cada objeto { ... }
     $itemMatches = [regex]::Matches($block, '\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}')
     foreach ($m in $itemMatches) {
         $itemText = $m.Groups[1].Value
@@ -63,13 +79,13 @@ function Show-Items {
     $items = Parse-PortfolioItems $ArrayName
     if ($items.Count -eq 0) { Write-Warn "Nenhum item encontrado em '$Label'."; return }
     
-    Write-Host "`n  === $Label ===" -ForegroundColor Magenta
+    Write-Host "`n  :: $Label ::" -ForegroundColor Magenta
     Write-Sep
     foreach ($item in $items) {
-        $num = $item.Index + 1
-        $typeLabel = if ($item.Type -eq 'image') { "Imagem" } else { "Video" }
-        $urlDisplay = if ($item.MediaUrl) { $item.MediaUrl } else { "(sem midia - placeholder)" }
-        $doubleTag = if ($item.Double) { " [DUPLO]" } else { "" }
+        $num = ($item.Index + 1).ToString().PadLeft(2, '0')
+        $typeLabel = if ($item.Type -eq 'image') { "Imagem" } else { "Video " }
+        $urlDisplay = if ($item.MediaUrl) { $item.MediaUrl } else { "(sem midia vinculada)" }
+        $doubleTag = if ($item.Double) { " [DESTAQUE]" } else { "" }
         
         Write-Host "  [$num] " -NoNewline -ForegroundColor Yellow
         Write-Host "$typeLabel$doubleTag" -NoNewline -ForegroundColor White
@@ -77,13 +93,13 @@ function Show-Items {
         if ($item.MediaUrl) {
             Write-Host "$urlDisplay" -ForegroundColor Green
         } else {
-            Write-Host "$urlDisplay" -ForegroundColor DarkYellow
+            Write-Host "$urlDisplay" -ForegroundColor DarkGray
         }
     }
     Write-Sep
 }
 
-# --- Altera a URL de um item ---
+# --- Modificadores do Arquivo ---
 function Set-ItemUrl {
     param([string]$ArrayName, [int]$ItemIndex, [string]$NewUrl)
     $content = Get-DataContent
@@ -93,19 +109,15 @@ function Set-ItemUrl {
     
     $block = $match.Groups[1].Value
     $itemMatches = [regex]::Matches($block, '\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}')
-    
     if ($ItemIndex -lt 0 -or $ItemIndex -ge $itemMatches.Count) { Write-Err "Indice invalido."; return $false }
     
     $oldItem = $itemMatches[$ItemIndex].Value
     
-    if ($NewUrl -eq "") {
-        # Remover mediaUrl se existe
+    if ([string]::IsNullOrWhiteSpace($NewUrl)) {
         $newItem = $oldItem -replace ",?\s*mediaUrl:\s*'[^']*'", ""
     } elseif ($oldItem -match "mediaUrl:\s*'[^']*'") {
-        # Substituir URL existente
         $newItem = $oldItem -replace "mediaUrl:\s*'[^']*'", "mediaUrl: '$NewUrl'"
     } else {
-        # Adicionar mediaUrl antes do ultimo }
         $newItem = $oldItem -replace '\}$', ", mediaUrl: '$NewUrl' }"
     }
     
@@ -114,12 +126,10 @@ function Set-ItemUrl {
     return $true
 }
 
-# --- Adiciona um novo item ao array ---
 function Add-Item {
     param([string]$ArrayName, [string]$Type, [string]$MediaUrl, [bool]$Double = $false)
     $content = Get-DataContent
     
-    # Configura cor e icone baseado no array e tipo
     switch ($ArrayName) {
         "artItems"  { $color = "from-amber-200 to-yellow-200"; $iconColor = "text-amber-600"; $iconJsx = "<ImageIcon className=`"w-10 h-10`" />" }
         "videoItems" { $color = "from-orange-200 to-yellow-200"; $iconColor = "text-orange-600"; $iconJsx = "<Video className=`"w-10 h-10`" />" }
@@ -130,16 +140,11 @@ function Add-Item {
     $mediaStr = if ($MediaUrl) { ", mediaUrl: '$MediaUrl'" } else { "" }
     $newEntry = "  { type: '$Type', color: '$color', iconColor: '$iconColor', icon: $iconJsx$doubleStr$mediaStr },"
     
-    # Insere antes do ]; final do array
-    $pattern = "(export const ${ArrayName}: PortfolioItem\[\] = \[[\s\S]*?)(^\];)"
-    $content = Get-DataContent
     $newContent = $content -replace "(export const ${ArrayName}: PortfolioItem\[\] = \[[\s\S]*?)(];)", "`$1`n$newEntry`n`$2"
-    
     Set-Content $dataFile -Value $newContent -Encoding UTF8 -NoNewline
     return $true
 }
 
-# --- Remove um item do array ---
 function Remove-Item-FromArray {
     param([string]$ArrayName, [int]$ItemIndex)
     $content = Get-DataContent
@@ -149,192 +154,195 @@ function Remove-Item-FromArray {
     
     $block = $match.Groups[1].Value
     $itemMatches = [regex]::Matches($block, '\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}')
-    
     if ($ItemIndex -lt 0 -or $ItemIndex -ge $itemMatches.Count) { Write-Err "Indice invalido."; return $false }
     
     $oldItem = $itemMatches[$ItemIndex].Value
-    # Remove o item e virgula/espaços ao redor
     $newBlock = $block -replace [regex]::Escape($oldItem) + ",?\s*", ""
-    
     $newContent = $content.Replace($block, $newBlock)
     Set-Content $dataFile -Value $newContent -Encoding UTF8 -NoNewline
     return $true
 }
 
-# --- Faz build, commit e push automatico ---
+# --- Deploy Automatico (Oculto/Limpo) ---
 function Deploy-Changes {
-    param([string]$CommitMsg = "Update portfolio media")
-    Write-Host "`n  Fazendo deploy automatico..." -ForegroundColor Cyan
+    Write-Host "`n  [ Iniciando Sincronizacao Automatica com o GitHub ]" -ForegroundColor Cyan
     
     try {
         Push-Location $PSScriptRoot
         
-        Write-Host "  [1/4] Compilando projeto..." -ForegroundColor DarkGray
-        npm run build 2>&1 | Out-Null
-        if ($LASTEXITCODE -ne 0) { Write-Err "Build falhou!"; Pop-Location; return }
-        Write-Success "Build concluido."
+        Write-Host "  > Compilando o site (pode levar alguns segundos)... " -NoNewline -ForegroundColor DarkGray
+        $buildOutput = npm run build 2>&1
+        if ($LASTEXITCODE -ne 0) { 
+            Write-Host "FALHOU!" -ForegroundColor Red
+            Write-Err "Erro no Build. Execute 'npm run build' manualmente para ver o erro."
+            Pop-Location; return 
+        }
+        Write-Host "OK!" -ForegroundColor Green
         
-        Write-Host "  [2/4] Preparando arquivos..." -ForegroundColor DarkGray
+        Write-Host "  > Registrando alteracoes no Git... " -NoNewline -ForegroundColor DarkGray
         git add src/data.tsx index.html 2>&1 | Out-Null
-        Write-Success "Arquivos preparados."
+        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+        git commit -m "Auto-update portfolio media: $timestamp" 2>&1 | Out-Null
+        Write-Host "OK!" -ForegroundColor Green
         
-        Write-Host "  [3/4] Criando commit..." -ForegroundColor DarkGray
-        git commit -m $CommitMsg 2>&1 | Out-Null
-        Write-Success "Commit: $CommitMsg"
+        Write-Host "  > Enviando para o servidor do site... " -NoNewline -ForegroundColor DarkGray
+        $pushOutput = git push origin main 2>&1
+        if ($LASTEXITCODE -ne 0) { 
+            Write-Host "FALHOU!" -ForegroundColor Red
+            Write-Err "Erro de rede ou permissao ao enviar para o GitHub."
+            Pop-Location; return 
+        }
+        Write-Host "OK!" -ForegroundColor Green
         
-        Write-Host "  [4/4] Enviando para o GitHub..." -ForegroundColor DarkGray
-        git push origin main 2>&1 | Out-Null
-        if ($LASTEXITCODE -ne 0) { Write-Err "Push falhou! Verifique suas credenciais."; Pop-Location; return }
-        Write-Success "Push concluido! O GitHub Actions vai publicar automaticamente."
-        
-        Write-Host "`n  Seu site sera atualizado em ~1 minuto em:" -ForegroundColor Green
-        Write-Host "  https://DiogoAlbq.github.io/PortfolioMaka/`n" -ForegroundColor Yellow
+        Write-Host "`n  ========================================================" -ForegroundColor Cyan
+        Write-Success "Deploy disparado com SUCESSO!"
+        Write-Host "  O site atualizado estara no ar em ~1 minuto em:" -ForegroundColor White
+        Write-Host "  https://DiogoAlbq.github.io/PortfolioMaka/" -ForegroundColor Yellow
+        Write-Host "  ========================================================" -ForegroundColor Cyan
         
         Pop-Location
     } catch {
-        Write-Err "Erro durante o deploy: $_"
+        Write-Err "Erro inesperado durante o deploy: $_"
         Pop-Location
     }
 }
 
-# --- Mapeamento de arrays ---
+# --- Dicionario de Categorias ---
 $arrays = @{
     "1" = @{ Name = "artItems"; Label = "Artes (Ilustracoes)" }
     "2" = @{ Name = "videoItems"; Label = "Videos" }
     "3" = @{ Name = "nsfwItems"; Label = "NSFW (18+)" }
 }
 
-# ========================
-#  MENU PRINCIPAL
-# ========================
-function Show-Menu {
-    Write-Header
-    Write-Host "  Escolha uma opcao:`n" -ForegroundColor White
-    Write-Host "  [1] " -NoNewline -ForegroundColor Yellow; Write-Host "Listar todas as midias do portfolio" -ForegroundColor White
-    Write-Host "  [2] " -NoNewline -ForegroundColor Yellow; Write-Host "Alterar URL de uma midia existente" -ForegroundColor White
-    Write-Host "  [3] " -NoNewline -ForegroundColor Yellow; Write-Host "Adicionar nova midia" -ForegroundColor White
-    Write-Host "  [4] " -NoNewline -ForegroundColor Yellow; Write-Host "Remover uma midia" -ForegroundColor White
-    Write-Host "  [5] " -NoNewline -ForegroundColor Yellow; Write-Host "Fazer deploy (publicar alteracoes no site)" -ForegroundColor White
-    Write-Host "  [0] " -NoNewline -ForegroundColor Red; Write-Host "Sair`n" -ForegroundColor White
-}
-
 function Select-Category {
-    Write-Host "`n  Qual categoria?" -ForegroundColor White
+    Write-Host "`n  Selecione a Galeria:" -ForegroundColor White
     Write-Host "  [1] Artes (Ilustracoes)" -ForegroundColor Yellow
     Write-Host "  [2] Videos" -ForegroundColor Yellow
     Write-Host "  [3] NSFW (18+)" -ForegroundColor Yellow
-    $choice = Read-Host "`n  Opcao"
+    Write-Host "  [0] Voltar" -ForegroundColor DarkGray
+    
+    $choice = Read-Host "`n  Sua opcao"
+    if ($choice -eq "0") { return $null }
     if ($arrays.ContainsKey($choice)) { return $arrays[$choice] }
     Write-Warn "Opcao invalida."; return $null
 }
 
-# --- Loop principal ---
-$hasChanges = $false
-
+# ========================
+#  LOOP PRINCIPAL
+# ========================
 while ($true) {
-    Show-Menu
-    $option = Read-Host "  Opcao"
+    Write-Header
+    Write-Host "  Menu de Acoes:" -ForegroundColor White
+    Write-Host "  [1] " -NoNewline -ForegroundColor Cyan; Write-Host "Visao Geral (Listar todas as midias)" -ForegroundColor White
+    Write-Host "  [2] " -NoNewline -ForegroundColor Yellow; Write-Host "Trocar URL de uma midia existente" -ForegroundColor White
+    Write-Host "  [3] " -NoNewline -ForegroundColor Green; Write-Host "Adicionar NOVA midia ao site" -ForegroundColor White
+    Write-Host "  [4] " -NoNewline -ForegroundColor Red; Write-Host "Remover uma midia do site" -ForegroundColor White
+    Write-Host "  [5] " -NoNewline -ForegroundColor Magenta; Write-Host "Forcar Sincronizacao / Deploy" -ForegroundColor White
+    Write-Host "  [0] " -NoNewline -ForegroundColor DarkGray; Write-Host "Sair do Gerenciador" -ForegroundColor White
+    
+    $option = Read-Host "`n  O que deseja fazer?"
     
     switch ($option) {
         "1" {
-            # Listar
+            Write-Header
             foreach ($key in ($arrays.Keys | Sort-Object)) {
                 $a = $arrays[$key]
                 Show-Items -ArrayName $a.Name -Label $a.Label
             }
-            Read-Host "`n  Pressione ENTER para voltar ao menu"
+            Pause-Screen
         }
         "2" {
-            # Alterar URL
+            Write-Header
+            Write-Host "  > TROCAR URL DE MIDIA <" -ForegroundColor Yellow
             $cat = Select-Category
             if ($null -eq $cat) { continue }
+            
+            Write-Header
             Show-Items -ArrayName $cat.Name -Label $cat.Label
             $items = Parse-PortfolioItems $cat.Name
-            if ($items.Count -eq 0) { continue }
+            if ($items.Count -eq 0) { Pause-Screen; continue }
             
-            $num = Read-Host "`n  Numero do item para alterar"
+            $num = Read-Host "`n  Qual o NUMERO da midia que deseja alterar?"
             $idx = [int]$num - 1
-            if ($idx -lt 0 -or $idx -ge $items.Count) { Write-Err "Numero invalido."; continue }
+            if ($idx -lt 0 -or $idx -ge $items.Count) { Write-Err "Numero invalido."; Pause-Screen; continue }
             
             Write-Host "`n  URL atual: " -NoNewline -ForegroundColor DarkGray
             $currentUrl = $items[$idx].MediaUrl
             if ($currentUrl) { Write-Host $currentUrl -ForegroundColor Green }
-            else { Write-Host "(vazio)" -ForegroundColor DarkYellow }
+            else { Write-Host "(vazio)" -ForegroundColor DarkGray }
             
-            $newUrl = Read-Host "  Nova URL (deixe vazio para remover)"
+            Write-Host "  (Dica: Deixe vazio e aperte ENTER para apenas remover a imagem atual do slot)" -ForegroundColor DarkGray
+            $newUrl = Read-Host "  Cole a NOVA URL"
             
             if (Set-ItemUrl -ArrayName $cat.Name -ItemIndex $idx -NewUrl $newUrl) {
-                if ($newUrl) { Write-Success "URL atualizada com sucesso!" }
-                else { Write-Success "URL removida com sucesso!" }
-                $hasChanges = $true
+                Write-Success "Galeria atualizada localmente!"
+                Deploy-Changes
             }
+            Pause-Screen
         }
         "3" {
-            # Adicionar
+            Write-Header
+            Write-Host "  > ADICIONAR NOVA MIDIA <" -ForegroundColor Green
             $cat = Select-Category
             if ($null -eq $cat) { continue }
             
-            Write-Host "`n  Tipo de midia:" -ForegroundColor White
+            Write-Host "`n  E uma Imagem ou Video?" -ForegroundColor White
             Write-Host "  [1] Imagem" -ForegroundColor Yellow
             Write-Host "  [2] Video" -ForegroundColor Yellow
             $typeChoice = Read-Host "  Opcao"
             $type = if ($typeChoice -eq "2") { "video" } else { "image" }
             
-            $url = Read-Host "  URL da midia (ou ENTER para placeholder)"
+            Write-Host "`n  Cole o link direto da imagem/video. (Pode deixar vazio para adicionar um card em branco provisorio)" -ForegroundColor DarkGray
+            $url = Read-Host "  URL"
             
-            $doubleChoice = Read-Host "  Ocupa 2 colunas no grid? (s/N)"
-            $isDouble = $doubleChoice -eq "s" -or $doubleChoice -eq "S"
+            Write-Host "`n  Deseja que esse item ocupe o espaco de 2 colunas no site? (ideal para imagens horizontais)" -ForegroundColor DarkGray
+            $doubleChoice = Read-Host "  (S/N)"
+            $isDouble = $doubleChoice -match "^[sS]"
             
             if (Add-Item -ArrayName $cat.Name -Type $type -MediaUrl $url -Double $isDouble) {
-                Write-Success "Item adicionado com sucesso!"
-                $hasChanges = $true
+                Write-Success "Midia adicionada localmente!"
+                Deploy-Changes
             }
+            Pause-Screen
         }
         "4" {
-            # Remover
+            Write-Header
+            Write-Host "  > REMOVER MIDIA <" -ForegroundColor Red
             $cat = Select-Category
             if ($null -eq $cat) { continue }
+            
+            Write-Header
             Show-Items -ArrayName $cat.Name -Label $cat.Label
             $items = Parse-PortfolioItems $cat.Name
-            if ($items.Count -eq 0) { continue }
+            if ($items.Count -eq 0) { Pause-Screen; continue }
             
-            $num = Read-Host "`n  Numero do item para REMOVER"
+            $num = Read-Host "`n  Qual o NUMERO da midia que deseja REMOVER permanentemente?"
             $idx = [int]$num - 1
-            if ($idx -lt 0 -or $idx -ge $items.Count) { Write-Err "Numero invalido."; continue }
+            if ($idx -lt 0 -or $idx -ge $items.Count) { Write-Err "Numero invalido."; Pause-Screen; continue }
             
-            $confirm = Read-Host "  Tem certeza que quer remover o item $num? (s/N)"
-            if ($confirm -eq "s" -or $confirm -eq "S") {
+            $confirm = Read-Host "`n  TEM CERTEZA que deseja apagar o slot $num? (S/N)"
+            if ($confirm -match "^[sS]") {
                 if (Remove-Item-FromArray -ArrayName $cat.Name -ItemIndex $idx) {
-                    Write-Success "Item removido com sucesso!"
-                    $hasChanges = $true
+                    Write-Success "Slot removido localmente!"
+                    Deploy-Changes
                 }
             } else {
-                Write-Warn "Operacao cancelada."
+                Write-Warn "Acao cancelada."
             }
+            Pause-Screen
         }
         "5" {
-            # Deploy
-            if (-not $hasChanges) { 
-                Write-Warn "Nenhuma alteracao pendente para publicar."
-                $forceDeploy = Read-Host "  Deseja forcar o deploy mesmo assim? (s/N)"
-                if ($forceDeploy -ne "s" -and $forceDeploy -ne "S") { continue }
-            }
-            Deploy-Changes -CommitMsg "Update portfolio media via manager"
-            $hasChanges = $false
+            Write-Header
+            Deploy-Changes
+            Pause-Screen
         }
         "0" {
-            if ($hasChanges) {
-                Write-Warn "Voce tem alteracoes nao publicadas!"
-                $deployNow = Read-Host "  Deseja fazer deploy antes de sair? (s/N)"
-                if ($deployNow -eq "s" -or $deployNow -eq "S") {
-                    Deploy-Changes -CommitMsg "Update portfolio media via manager"
-                }
-            }
-            Write-Host "`n  Ate mais! " -ForegroundColor Cyan
+            Write-Host "`n  Saindo do gerenciador... Ate a proxima, Maka! `n" -ForegroundColor Cyan
             break
         }
         default {
             Write-Warn "Opcao invalida. Tente novamente."
+            Start-Sleep -Seconds 1
         }
     }
 }
