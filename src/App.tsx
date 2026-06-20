@@ -24,7 +24,6 @@ import {
 import { 
   exchangeRate, 
   t, 
-  pricingData, 
   artItems, 
   videoItems, 
   nsfwItems, 
@@ -513,9 +512,16 @@ export default function App() {
                   key={item.color + activePortfolioTab}
                   className={`group relative rounded-3xl overflow-hidden border-2 shadow-sm transition-all cursor-pointer ${theme.card} bg-gradient-to-br ${item.color} ${item.double ? 'md:col-span-2 lg:col-span-2' : ''} hover:shadow-xl`}
                 >
-                  <div className="absolute inset-0 bg-white/10 group-hover:bg-transparent transition-colors duration-500"></div>
-                  <div className={`absolute inset-0 flex items-center justify-center opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500 ${item.iconColor}`}>
-                    {item.icon}
+                  <div className={`absolute inset-0 flex items-center justify-center opacity-80 group-hover:opacity-100 transition-all duration-500 ${item.iconColor}`}>
+                    {item.mediaUrl ? (
+                      item.type === 'video' ? (
+                        <video src={item.mediaUrl} autoPlay loop muted playsInline className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                      ) : (
+                        <img src={item.mediaUrl} alt="Portfolio item" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                      )
+                    ) : (
+                      <div className="group-hover:scale-110 transition-transform duration-500">{item.icon}</div>
+                    )}
                   </div>
                   <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0">
                     <div className={`backdrop-blur-md px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-colors duration-500 ${theme.heroBadge}`}>
@@ -562,9 +568,9 @@ export default function App() {
             </div>
 
             {/* Pricing Cards Grid */}
-            <div className={`grid grid-cols-1 ${pricingData[activeTab].length === 1 ? 'md:grid-cols-1 max-w-sm' : pricingData[activeTab].length === 2 ? 'md:grid-cols-2 max-w-3xl' : 'md:grid-cols-3 max-w-5xl'} gap-8 mx-auto`}>
+            <div className={`grid grid-cols-1 ${tLang.pricingPlans[activeTab].length === 1 ? 'md:grid-cols-1 max-w-sm' : tLang.pricingPlans[activeTab].length === 2 ? 'md:grid-cols-2 max-w-3xl' : 'md:grid-cols-3 max-w-5xl'} gap-8 mx-auto`}>
               <AnimatePresence mode="wait">
-                {pricingData[activeTab].map((plan, i) => {
+                {tLang.pricingPlans[activeTab].map((plan, i) => {
                   const planKey = `${activeTab}-${i}`;
                   const totalPrice = calculatePlanTotal(plan, planKey);
                   return (

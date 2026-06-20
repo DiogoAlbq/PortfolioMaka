@@ -6,9 +6,74 @@ export const exchangeRate = 5.75;
 export const t = {
     EN: {
         nav: { home: "Home", portfolio: "Portfolio", services: "Services", terms: "Terms", contact: "Contact", order: "Book Now" },
-        hero: { status: "Commissions Open", title1: "Artist | Fan Dubber |", title2: "Editor | Pixel Artist", desc: "Cartoon simples e bobo", btn1: "See Services", btn2: "Explore Portfolio" },
+        hero: { status: "Commissions Open", title1: "Artist | Fan Dubber |", title2: "Editor | Pixel Artist", desc: "Simple and goofy cartoons", btn1: "See Services", btn2: "Explore Portfolio" },
         portfolio: { title: "Recent Projects", desc: "A selection of my best digital art and video editing projects.", typeImage: "Illustration", typeVideo: "Video Edit", tabs: [{id: 'all', label: 'All'}, {id: 'video', label: 'Video'}, {id: 'nsfw', label: 'NSFW (18+)'}] },
         pricing: { title: "Investment", desc: "Base values for projects. Final price may vary depending on project complexity. Contact me for custom quotes.", tabs: [{id: 'digital', label: 'Digital Art'}, {id: 'special', label: 'Other Services'}], popular: "Most Popular", addons: "Add-ons", select: "Select" },
+        pricingPlans: {
+            digital: [
+                {
+                    title: 'Headshot / Icon',
+                    price: '35',
+                    addons: [
+                        { name: 'Background', price: '+20' },
+                        { name: 'Extra Character', price: '+30' },
+                        { name: 'Items | Accessories', price: '+15' },
+                    ]
+                },
+                {
+                    title: 'Half Body',
+                    price: '50',
+                    addons: [
+                        { name: 'NSFW', price: '+25' },
+                        { name: 'Background', price: '+20' },
+                        { name: 'Extra Character', price: '+25' },
+                        { name: 'Items | Accessories', price: '+15' },
+                    ]
+                },
+                {
+                    title: 'Full Body',
+                    price: '100',
+                    popular: true,
+                    addons: [
+                        { name: 'NSFW', price: '+50' },
+                        { name: 'Background', price: '+50' },
+                        { name: 'Extra Character', price: '+50' },
+                        { name: 'Items | Accessories', price: '+25' },
+                    ]
+                }
+            ],
+            special: [
+                {
+                    title: 'Pixel Art',
+                    price: '60',
+                    addons: [
+                        { name: 'Background', price: '+20' },
+                        { name: 'Animated', price: '+100' },
+                        { name: 'Extra Character', price: '+30' },
+                        { name: 'Items | Accessories', price: '+15' },
+                    ]
+                },
+                {
+                    title: 'Pngtuber Remix',
+                    price: '80',
+                    popular: true,
+                    addons: [
+                        { name: 'NSFW', price: '+50' },
+                        { name: 'Background', price: '+20' },
+                        { name: 'Special Features', price: '+150' },
+                        { name: 'Extra Character', price: '+50' },
+                    ]
+                },
+                {
+                    title: 'Minecraft Skin',
+                    price: '75',
+                    addons: [
+                        { name: 'CPM', price: '+50' },
+                        { name: 'MOD mob', price: '+50' },
+                    ]
+                }
+            ]
+        },
         tos: { 
             title: "Terms & Conditions", 
             subtitle: "Please read carefully before requesting a commission.", 
@@ -46,6 +111,71 @@ export const t = {
         hero: { status: "Comissões Abertas", title1: "Artist | Fan Dubber |", title2: "Editor | Pixel Artist", desc: "Cartoon simples e bobo", btn1: "Ver Serviços e Preços", btn2: "Explorar Portfólio" },
         portfolio: { title: "Trabalhos Recentes", desc: "Uma seleção das minhas melhores artes digitais e vídeos recentes.", typeImage: "Ilustração", typeVideo: "Edição de Vídeo", tabs: [{id: 'all', label: 'Todos'}, {id: 'video', label: 'Vídeos'}, {id: 'nsfw', label: 'NSFW (18+)'}] },
         pricing: { title: "Investimento", desc: "Valores base para projetos. O preço final pode variar dependendo da complexidade do pedido. Entre em contato para orçamentos personalizados.", tabs: [{id: 'digital', label: 'Arte Digital'}, {id: 'special', label: 'Serviços Especiais'}], popular: "Mais Popular", addons: "Adicionais", select: "Selecionar" },
+        pricingPlans: {
+            digital: [
+                {
+                    title: 'Cabeça / Ícone',
+                    price: '35',
+                    addons: [
+                        { name: 'Cenário', price: '+20' },
+                        { name: 'Personagem Extra', price: '+30' },
+                        { name: 'Itens | Acessórios', price: '+15' },
+                    ]
+                },
+                {
+                    title: 'Dorso / Metade do Corpo',
+                    price: '50',
+                    addons: [
+                        { name: 'NSFW', price: '+25' },
+                        { name: 'Cenário', price: '+20' },
+                        { name: 'Personagem Extra', price: '+25' },
+                        { name: 'Itens | Acessórios', price: '+15' },
+                    ]
+                },
+                {
+                    title: 'Corpo Inteiro',
+                    price: '100',
+                    popular: true,
+                    addons: [
+                        { name: 'NSFW', price: '+50' },
+                        { name: 'Cenário', price: '+50' },
+                        { name: 'Personagem Extra', price: '+50' },
+                        { name: 'Itens | Acessórios', price: '+25' },
+                    ]
+                }
+            ],
+            special: [
+                {
+                    title: 'Pixel Arte',
+                    price: '60',
+                    addons: [
+                        { name: 'Cenário', price: '+20' },
+                        { name: 'Animado', price: '+100' },
+                        { name: 'Personagem Extra', price: '+30' },
+                        { name: 'Itens | Acessórios', price: '+15' },
+                    ]
+                },
+                {
+                    title: 'Pngtuber Remix',
+                    price: '80',
+                    popular: true,
+                    addons: [
+                        { name: 'NSFW', price: '+50' },
+                        { name: 'Cenário', price: '+20' },
+                        { name: 'Características esp.', price: '+150' },
+                        { name: 'Personagem Extra', price: '+50' },
+                    ]
+                },
+                {
+                    title: 'Skin minecraft',
+                    price: '75',
+                    addons: [
+                        { name: 'CPM', price: '+50' },
+                        { name: 'MOD mob', price: '+50' },
+                    ]
+                }
+            ]
+        },
         tos: { 
             title: "Termos & Condições", 
             subtitle: "Por favor, leia atentamente antes de solicitar uma comissão.", 
@@ -80,78 +210,13 @@ export const t = {
     }
 };
 
-export const pricingData = {
-  digital: [
-    {
-      title: 'Cabeça / Ícone',
-      price: '35',
-      addons: [
-        { name: 'Cenário', price: '+20' },
-        { name: 'Personagem Extra', price: '+30' },
-        { name: 'Itens | Acessórios', price: '+15' },
-      ]
-    },
-    {
-      title: 'Dorço / Metade do Corpo',
-      price: '50',
-      addons: [
-        { name: 'NSFW', price: '+25' },
-        { name: 'Cenário', price: '+20' },
-        { name: 'Personagem Extra', price: '+25' },
-        { name: 'Itens | Acessórios', price: '+15' },
-      ]
-    },
-    {
-      title: 'Corpo Inteiro',
-      price: '100',
-      popular: true,
-      addons: [
-        { name: 'NSFW', price: '+50' },
-        { name: 'Cenário', price: '+50' },
-        { name: 'Personagem Extra', price: '+50' },
-        { name: 'Itens | Acessórios', price: '+25' },
-      ]
-    }
-  ],
-  special: [
-    {
-      title: 'Pixel Arte',
-      price: '60',
-      addons: [
-        { name: 'Cenário', price: '+20' },
-        { name: 'Animado', price: '+100' },
-        { name: 'Personagem Extra', price: '+30' },
-        { name: 'Itens | Acessórios', price: '+15' },
-      ]
-    },
-    {
-      title: 'Pngtuber Remix',
-      price: '80',
-      popular: true,
-      addons: [
-        { name: 'NSFW', price: '+50' },
-        { name: 'Cenário', price: '+20' },
-        { name: 'Características esp.', price: '+150' },
-        { name: 'Personagem Extra', price: '+50' },
-      ]
-    },
-    {
-      title: 'Skin minecraft',
-      price: '75',
-      addons: [
-        { name: 'CPM', price: '+50' },
-        { name: 'MOD mob', price: '+50' },
-      ]
-    }
-  ]
-};
-
 export interface PortfolioItem {
   type: string;
   color: string;
   iconColor: string;
   icon: React.JSX.Element;
   double?: boolean;
+  mediaUrl?: string;
 }
 
 export const artItems: PortfolioItem[] = [
