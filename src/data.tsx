@@ -12,64 +12,76 @@ export const t = {
         pricingPlans: {
             digital: [
                 {
-                    title: 'Headshot / Icon',
-                    price: '35',
+                    id: "SRV-01",
+                    title: 'Head / Icon',
+                    price_usd: 25.0,
+                    price_brl: 35.0,
                     addons: [
-                        { name: 'Background', price: '+20' },
-                        { name: 'Extra Character', price: '+30' },
-                        { name: 'Items | Accessories', price: '+15' },
+                        { name: 'Background', price_usd: 15.0, price_brl: 20.0 },
+                        { name: 'Extra Character', price_usd: 25.0, price_brl: 30.0 },
+                        { name: 'Items / Accessories', price_usd: 15.0, price_brl: 15.0 },
                     ]
                 },
                 {
+                    id: "SRV-02",
                     title: 'Half Body',
-                    price: '50',
+                    price_usd: 35.0,
+                    price_brl: 50.0,
                     addons: [
-                        { name: 'NSFW', price: '+25' },
-                        { name: 'Background', price: '+20' },
-                        { name: 'Extra Character', price: '+25' },
-                        { name: 'Items | Accessories', price: '+15' },
+                        { name: 'NSFW', price_usd: 15.0, price_brl: 25.0 },
+                        { name: 'Background', price_usd: 15.0, price_brl: 20.0 },
+                        { name: 'Extra Character', price_usd: 25.0, price_brl: 25.0 },
+                        { name: 'Items / Accessories', price_usd: 15.0, price_brl: 15.0 },
                     ]
                 },
                 {
+                    id: "SRV-03",
                     title: 'Full Body',
-                    price: '100',
+                    price_usd: 65.0,
+                    price_brl: 100.0,
                     popular: true,
                     addons: [
-                        { name: 'NSFW', price: '+50' },
-                        { name: 'Background', price: '+50' },
-                        { name: 'Extra Character', price: '+50' },
-                        { name: 'Items | Accessories', price: '+25' },
+                        { name: 'NSFW', price_usd: 25.0, price_brl: 50.0 },
+                        { name: 'Background', price_usd: 25.0, price_brl: 50.0 },
+                        { name: 'Extra Character', price_usd: 50.0, price_brl: 50.0 },
+                        { name: 'Items / Accessories', price_usd: 25.0, price_brl: 25.0 },
                     ]
                 }
             ],
             special: [
                 {
+                    id: "SRV-04",
                     title: 'Pixel Art',
-                    price: '60',
+                    price_usd: 50.0,
+                    price_brl: 60.0,
                     addons: [
-                        { name: 'Background', price: '+20' },
-                        { name: 'Animated', price: '+100' },
-                        { name: 'Extra Character', price: '+30' },
-                        { name: 'Items | Accessories', price: '+15' },
+                        { name: 'Background', price_usd: 20.0, price_brl: 20.0 },
+                        { name: 'Animated', price_usd: 50.0, price_brl: 100.0 },
+                        { name: 'Extra Character', price_usd: 30.0, price_brl: 30.0 },
+                        { name: 'Items / Accessories', price_usd: 15.0, price_brl: 15.0 },
                     ]
                 },
                 {
-                    title: 'Pngtuber Remix',
-                    price: '80',
+                    id: "SRV-05",
+                    title: 'PNGTuber Remix',
+                    price_usd: 80.0,
+                    price_brl: 80.0,
                     popular: true,
                     addons: [
-                        { name: 'NSFW', price: '+50' },
-                        { name: 'Background', price: '+20' },
-                        { name: 'Special Features', price: '+150' },
-                        { name: 'Extra Character', price: '+50' },
+                        { name: 'NSFW', price_usd: 50.0, price_brl: 50.0 },
+                        { name: 'Background', price_usd: 20.0, price_brl: 20.0 },
+                        { name: 'Specific Features', price_usd: 50.0, price_brl: 150.0, type: 'per_unit' },
+                        { name: 'Extra Character', price_usd: 50.0, price_brl: 50.0 },
                     ]
                 },
                 {
+                    id: "SRV-06",
                     title: 'Minecraft Skin',
-                    price: '75',
+                    price_usd: 75.0,
+                    price_brl: 75.0,
                     addons: [
-                        { name: 'CPM', price: '+50' },
-                        { name: 'MOD mob', price: '+50' },
+                        { name: 'CPM', price_usd: 50.0, price_brl: 50.0 },
+                        { name: 'Mob Mod', price_usd: 50.0, price_brl: 50.0 },
                     ]
                 }
             ]
@@ -80,7 +92,7 @@ export const t = {
             do: "What I do", 
             dont: "What I DO NOT do", 
             doList: ["Original Characters (OCs) of various themes.", "Anime, game, and pop culture fanarts.", "Light armor and sci-fi/cyberpunk designs."], 
-            dontList: ["Extreme Gore: Hyper-realistic entrails or mutilations.", "Extreme Fetishes: I reserve the right to refuse requests that make me uncomfortable.", "Comics/Manga: I do not make complete sequential pages.", "NFTs & Crypto: Art shall not be used to fuel blockchains or train AI."],
+            dontList: ["Extreme Gore", "Extreme Fetishes", "Comics / Manga / Comic Books"],
             howToOrder: {
                 title: "How to Order",
                 methodsLabel: "Preferred contact method:",
@@ -114,64 +126,76 @@ export const t = {
         pricingPlans: {
             digital: [
                 {
+                    id: "SRV-01",
                     title: 'Cabeça / Ícone',
-                    price: '35',
+                    price_usd: 25.0,
+                    price_brl: 35.0,
                     addons: [
-                        { name: 'Cenário', price: '+20' },
-                        { name: 'Personagem Extra', price: '+30' },
-                        { name: 'Itens | Acessórios', price: '+15' },
+                        { name: 'Cenário / Fundo', price_usd: 15.0, price_brl: 20.0 },
+                        { name: 'Personagem Extra', price_usd: 25.0, price_brl: 30.0 },
+                        { name: 'Itens / Acessórios', price_usd: 15.0, price_brl: 15.0 },
                     ]
                 },
                 {
+                    id: "SRV-02",
                     title: 'Dorso / Metade do Corpo',
-                    price: '50',
+                    price_usd: 35.0,
+                    price_brl: 50.0,
                     addons: [
-                        { name: 'NSFW', price: '+25' },
-                        { name: 'Cenário', price: '+20' },
-                        { name: 'Personagem Extra', price: '+25' },
-                        { name: 'Itens | Acessórios', price: '+15' },
+                        { name: 'Conteúdo Adulto', price_usd: 15.0, price_brl: 25.0 },
+                        { name: 'Cenário / Fundo', price_usd: 15.0, price_brl: 20.0 },
+                        { name: 'Personagem Extra', price_usd: 25.0, price_brl: 25.0 },
+                        { name: 'Itens / Acessórios', price_usd: 15.0, price_brl: 15.0 },
                     ]
                 },
                 {
+                    id: "SRV-03",
                     title: 'Corpo Inteiro',
-                    price: '100',
+                    price_usd: 65.0,
+                    price_brl: 100.0,
                     popular: true,
                     addons: [
-                        { name: 'NSFW', price: '+50' },
-                        { name: 'Cenário', price: '+50' },
-                        { name: 'Personagem Extra', price: '+50' },
-                        { name: 'Itens | Acessórios', price: '+25' },
+                        { name: 'Conteúdo Adulto', price_usd: 25.0, price_brl: 50.0 },
+                        { name: 'Cenário / Fundo', price_usd: 25.0, price_brl: 50.0 },
+                        { name: 'Personagem Extra', price_usd: 50.0, price_brl: 50.0 },
+                        { name: 'Itens / Acessórios', price_usd: 25.0, price_brl: 25.0 },
                     ]
                 }
             ],
             special: [
                 {
+                    id: "SRV-04",
                     title: 'Pixel Arte',
-                    price: '60',
+                    price_usd: 50.0,
+                    price_brl: 60.0,
                     addons: [
-                        { name: 'Cenário', price: '+20' },
-                        { name: 'Animado', price: '+100' },
-                        { name: 'Personagem Extra', price: '+30' },
-                        { name: 'Itens | Acessórios', price: '+15' },
+                        { name: 'Cenário / Fundo', price_usd: 20.0, price_brl: 20.0 },
+                        { name: 'Animado', price_usd: 50.0, price_brl: 100.0 },
+                        { name: 'Personagem Extra', price_usd: 30.0, price_brl: 30.0 },
+                        { name: 'Itens / Acessórios', price_usd: 15.0, price_brl: 15.0 },
                     ]
                 },
                 {
+                    id: "SRV-05",
                     title: 'Pngtuber Remix',
-                    price: '80',
+                    price_usd: 80.0,
+                    price_brl: 80.0,
                     popular: true,
                     addons: [
-                        { name: 'NSFW', price: '+50' },
-                        { name: 'Cenário', price: '+20' },
-                        { name: 'Características esp.', price: '+150' },
-                        { name: 'Personagem Extra', price: '+50' },
+                        { name: 'Conteúdo Adulto', price_usd: 50.0, price_brl: 50.0 },
+                        { name: 'Cenário / Fundo', price_usd: 20.0, price_brl: 20.0 },
+                        { name: 'Características Específicas', price_usd: 50.0, price_brl: 150.0, type: 'per_unit' },
+                        { name: 'Personagem Extra', price_usd: 50.0, price_brl: 50.0 },
                     ]
                 },
                 {
-                    title: 'Skin minecraft',
-                    price: '75',
+                    id: "SRV-06",
+                    title: 'Skin Minecraft',
+                    price_usd: 75.0,
+                    price_brl: 75.0,
                     addons: [
-                        { name: 'CPM', price: '+50' },
-                        { name: 'MOD mob', price: '+50' },
+                        { name: 'CPM', price_usd: 50.0, price_brl: 50.0 },
+                        { name: 'MOD Mob', price_usd: 50.0, price_brl: 50.0 },
                     ]
                 }
             ]
@@ -182,7 +206,7 @@ export const t = {
             do: "O que eu faço", 
             dont: "O que eu NÃO faço", 
             doList: ["Original Characters (OCs) de diversas temáticas.", "Fanarts de animes, jogos e cultura pop.", "Armaduras leves e designs sci-fi / cyberpunk."], 
-            dontList: ["Extreme Gore: Tripas ou mutilações hiper-realistas.", "Extreme Fetishes: Reservo-me o direito de recusar pedidos que me causem desconforto.", "Comics / Manga: Não faço páginas sequenciais completas.", "NFTs & Crypto: Nenhuma arte deverá ser usada para alimentar blockchains ou treinar IA."],
+            dontList: ["Extreme Gore", "Extreme Fetishes", "Comics / Manga / Comic Books"],
             howToOrder: {
                 title: "Como Pedir (Fluxo do Cliente)",
                 methodsLabel: "Como prefere que o cliente faça o pedido?",
