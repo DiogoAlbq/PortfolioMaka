@@ -63,7 +63,9 @@ function Write-Header {
 
 function Write-Section($title) {
     Write-Host "  ┌─── $title " -NoNewline -ForegroundColor Cyan
-    Write-Host ("─" * (46 - $title.Length)) + "┐" -ForegroundColor Cyan
+    $pad = 45 - $title.Length
+    if ($pad -lt 0) { $pad = 0 }
+    Write-Host (("─" * $pad) + "┐") -ForegroundColor Cyan
 }
 
 function Write-SectionEnd {
@@ -165,20 +167,31 @@ function Get-PortfolioStats {
 
 function Show-Stats {
     $s = Get-PortfolioStats
-    $filled = if ($s.TotalItems -gt 0) { [math]::Round(($s.WithUrl / $s.TotalItems) * 100) } else { 0 }
-    Write-Host "  ┌─── Status do Portfólio ───────────────────────────┐" -ForegroundColor DarkCyan
-    Write-Host "  │  Total de slots : " -NoNewline -ForegroundColor DarkCyan
-    Write-Host "$($s.TotalItems.ToString().PadRight(4))" -NoNewline -ForegroundColor White
-    Write-Host "  Imagens: " -NoNewline -ForegroundColor DarkCyan
-    Write-Host "$($s.Images.ToString().PadRight(4))" -NoNewline -ForegroundColor Yellow
-    Write-Host "Vídeos: " -NoNewline -ForegroundColor DarkCyan
-    Write-Host "$($s.Videos)$('' * (14 - $s.Videos.ToString().Length))│" -ForegroundColor Cyan
-    Write-Host "  │  Com mídia      : " -NoNewline -ForegroundColor DarkCyan
-    Write-Host "$($s.WithUrl.ToString().PadRight(4))" -NoNewline -ForegroundColor Green
-    Write-Host "  Vazios : " -NoNewline -ForegroundColor DarkCyan
-    Write-Host "$($s.Empty.ToString().PadRight(4))" -NoNewline -ForegroundColor DarkGray
-    Write-Host "Preench.: " -NoNewline -ForegroundColor DarkCyan
-    Write-Host "$filled%$('' * (10 - "$filled%".Length))│" -ForegroundColor $(if ($filled -ge 70) { "Green" } elseif ($filled -ge 40) { "Yellow" } else { "Red" })
+    $filled = if ($s.TotalItems -gt 0) { [math]::Round(($s.WithUrl / [double]$s.TotalItems) * 100) } else { 0 }
+    
+    $tStr = $s.TotalItems.ToString().PadRight(4)
+    $iStr = $s.Images.ToString().PadRight(4)
+    $vStr = $s.Videos.ToString().PadRight(4)
+    
+    Write-Host "  ┌─── Status do Portfólio ──────────────────────────┐" -ForegroundColor DarkCyan
+    Write-Host "  │  Total: " -NoNewline -ForegroundColor DarkCyan
+    Write-Host $tStr -NoNewline -ForegroundColor White
+    Write-Host " Imagens: " -NoNewline -ForegroundColor DarkCyan
+    Write-Host $iStr -NoNewline -ForegroundColor Yellow
+    Write-Host " Vídeos: " -NoNewline -ForegroundColor DarkCyan
+    Write-Host $vStr -NoNewline -ForegroundColor Cyan
+    Write-Host (" " * 10 + "│") -ForegroundColor DarkCyan
+
+    $wStr = $s.WithUrl.ToString().PadRight(4)
+    $eStr = $s.Empty.ToString().PadRight(4)
+    $fStr = "$filled%".PadRight(4)
+    Write-Host "  │  Com URL: " -NoNewline -ForegroundColor DarkCyan
+    Write-Host $wStr -NoNewline -ForegroundColor Green
+    Write-Host " Vazios:  " -NoNewline -ForegroundColor DarkCyan
+    Write-Host $eStr -NoNewline -ForegroundColor DarkGray
+    Write-Host " Preench: " -NoNewline -ForegroundColor DarkCyan
+    Write-Host $fStr -NoNewline -ForegroundColor $(if ($filled -ge 70) { "Green" } elseif ($filled -ge 40) { "Yellow" } else { "Red" })
+    Write-Host (" " * 7 + "│") -ForegroundColor DarkCyan
     Write-Host "  └──────────────────────────────────────────────────┘" -ForegroundColor DarkCyan
     Write-Host ""
 }
@@ -187,12 +200,12 @@ function Show-Items {
     param([string]$ArrayName, [string]$Label, [string]$LabelColor = "Magenta")
     $items = Parse-PortfolioItems $ArrayName
     Write-Host "  ┌─── $Label " -NoNewline -ForegroundColor $LabelColor
-    $pad = 46 - $Label.Length
+    $pad = 45 - $Label.Length
     if ($pad -lt 0) { $pad = 0 }
-    Write-Host ("─" * $pad + "┐") -ForegroundColor $LabelColor
+    Write-Host (("─" * $pad) + "┐") -ForegroundColor $LabelColor
 
     if ($items.Count -eq 0) {
-        Write-Host "  │  (galeria vazia)$(' ' * 33)│" -ForegroundColor DarkGray
+        Write-Host "  │  (galeria vazia)$(' ' * 31)│" -ForegroundColor DarkGray
     } else {
         foreach ($item in $items) {
             $num = "[$($item.Index + 1)]".PadRight(4)
@@ -205,7 +218,7 @@ function Show-Items {
                 $url = $item.MediaUrl
                 if ($url.Length -gt 36) { $url = $url.Substring(0,33) + "..." }
                 Write-Host $url -NoNewline -ForegroundColor Green
-                Write-Host (" " * (36 - [math]::Min($url.Length, 36)) + " │") -ForegroundColor $LabelColor
+                Write-Host (" " * (36 - $url.Length) + " │") -ForegroundColor $LabelColor
             } else {
                 Write-Host "(vazio - sem mídia)$(' ' * 18)│" -ForegroundColor DarkGray
             }
@@ -230,16 +243,26 @@ function Set-ItemUrl {
     $itemMatches = [regex]::Matches($block, '\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}')
     if ($ItemIndex -lt 0 -or $ItemIndex -ge $itemMatches.Count) { return $false }
 
-    $oldItem = $itemMatches[$ItemIndex].Value
+    $oldItemMatch = $itemMatches[$ItemIndex]
+    $oldItem = $oldItemMatch.Value
+    $oldItemIndex = $oldItemMatch.Index
+    $oldItemLength = $oldItemMatch.Length
+
+    $prefix = $block.Substring(0, $oldItemIndex)
+    $suffix = $block.Substring($oldItemIndex + $oldItemLength)
+
     if ([string]::IsNullOrWhiteSpace($NewUrl)) {
         $newItem = $oldItem -replace ",?\s*mediaUrl:\s*'[^']*'", ""
     } elseif ($oldItem -match "mediaUrl:\s*'[^']*'") {
-        $newItem = $oldItem -replace "mediaUrl:\s*'[^']*'", "mediaUrl: '$NewUrl'"
+        $safeUrl = $NewUrl.Replace('$', '$$')
+        $newItem = $oldItem -replace "mediaUrl:\s*'[^']*'", "mediaUrl: '$safeUrl'"
     } else {
-        $newItem = $oldItem -replace '\}$', ", mediaUrl: '$NewUrl' }"
+        $safeUrl = $NewUrl.Replace('$', '$$')
+        $newItem = $oldItem -replace '\}$', ", mediaUrl: '$safeUrl' }"
     }
 
-    $newContent = $content.Replace($oldItem, $newItem)
+    $newBlock = $prefix + $newItem + $suffix
+    $newContent = $content.Replace($block, $newBlock)
     Set-Content $dataFile -Value $newContent -Encoding UTF8 -NoNewline
     return $true
 }
@@ -255,7 +278,8 @@ function Add-Item {
     $doubleStr = if ($Double) { ", double: true" } else { "" }
     $mediaStr  = if ($MediaUrl) { ", mediaUrl: '$MediaUrl'" } else { "" }
     $newEntry  = "  { type: '$Type', color: '$color', iconColor: '$iconColor', icon: $iconJsx$doubleStr$mediaStr },"
-    $newContent = $content -replace "(export const ${ArrayName}: PortfolioItem\[\] = \[[\s\S]*?)(];)", "`$1`n$newEntry`n`$2"
+    $newEntryEscaped = $newEntry.Replace('$', '$$')
+    $newContent = $content -replace "(export const ${ArrayName}: PortfolioItem\[\] = \[[\s\S]*?)(];)", "`$1`n$newEntryEscaped`n`$2"
     Set-Content $dataFile -Value $newContent -Encoding UTF8 -NoNewline
     return $true
 }
@@ -271,8 +295,16 @@ function Remove-PortfolioSlot {
     $itemMatches = [regex]::Matches($block, '\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}')
     if ($ItemIndex -lt 0 -or $ItemIndex -ge $itemMatches.Count) { return $false }
 
-    $oldItem = $itemMatches[$ItemIndex].Value
-    $newBlock = $block -replace ([regex]::Escape($oldItem) + ",?\s*"), ""
+    $oldItemMatch = $itemMatches[$ItemIndex]
+    $oldItemIndex = $oldItemMatch.Index
+    $oldItemLength = $oldItemMatch.Length
+
+    $prefix = $block.Substring(0, $oldItemIndex)
+    $suffix = $block.Substring($oldItemIndex + $oldItemLength)
+
+    $suffix = $suffix -replace "^,?\s*", ""
+
+    $newBlock = $prefix + $suffix
     $newContent = $content.Replace($block, $newBlock)
     Set-Content $dataFile -Value $newContent -Encoding UTF8 -NoNewline
     return $true
@@ -433,7 +465,7 @@ function Do-Wipe {
     # Preview
     Write-Host ""
     Write-Host "  ╔══════════════════════════════════════════════════╗" -ForegroundColor Red
-    Write-Host "  ║  ⚠  ATENÇÃO: Ação irreversível!                 ║" -ForegroundColor Red
+    Write-Host "  ║  ⚠  ATENÇÃO: Ação irreversível!                  ║" -ForegroundColor Red
     Write-Host "  ╚══════════════════════════════════════════════════╝" -ForegroundColor Red
     Write-Host ""
     $total = Show-WipePreview -TargetType $TargetType -WipeMode $mode
@@ -454,7 +486,7 @@ function Do-Wipe {
     Write-Host "  " -NoNewline
     $confirm = Read-Host ""
 
-    if ($confirm -cne "CONFIRMAR") {
+    if ($confirm -ne "CONFIRMAR") {
         Write-Warn "Operação cancelada."
         Start-Sleep -Seconds 1
         return
@@ -482,21 +514,21 @@ while ($true) {
     Write-Header
     Show-Stats
 
-    Write-Host "  ┌─── Menu ──────────────────────────────────────────┐" -ForegroundColor DarkGray
-    Write-Host "  │                                                   │" -ForegroundColor DarkGray
-    Write-Host "  │  [1] " -NoNewline -ForegroundColor DarkGray; Write-Host "Visão Geral           " -NoNewline -ForegroundColor White; Write-Host "Ver todas as mídias      │" -ForegroundColor DarkGray
-    Write-Host "  │  [2] " -NoNewline -ForegroundColor DarkGray; Write-Host "Trocar URL            " -NoNewline -ForegroundColor Yellow; Write-Host "Atualizar link de mídia  │" -ForegroundColor DarkGray
-    Write-Host "  │  [3] " -NoNewline -ForegroundColor DarkGray; Write-Host "Adicionar Mídia       " -NoNewline -ForegroundColor Green; Write-Host "Novo slot no site        │" -ForegroundColor DarkGray
-    Write-Host "  │  [4] " -NoNewline -ForegroundColor DarkGray; Write-Host "Remover Slot          " -NoNewline -ForegroundColor Red; Write-Host "Apagar um card           │" -ForegroundColor DarkGray
-    Write-Host "  │  [5] " -NoNewline -ForegroundColor DarkGray; Write-Host "Deploy                " -NoNewline -ForegroundColor Cyan; Write-Host "Sincronizar com GitHub   │" -ForegroundColor DarkGray
-    Write-Host "  │                                                   │" -ForegroundColor DarkGray
-    Write-Host "  │  [6] " -NoNewline -ForegroundColor DarkGray; Write-Host "WIPE Imagens          " -NoNewline -ForegroundColor DarkYellow; Write-Host "Limpar mídias IMG        │" -ForegroundColor DarkGray
-    Write-Host "  │  [7] " -NoNewline -ForegroundColor DarkGray; Write-Host "WIPE Vídeos           " -NoNewline -ForegroundColor DarkCyan; Write-Host "Limpar mídias VID        │" -ForegroundColor DarkGray
-    Write-Host "  │                                                   │" -ForegroundColor DarkGray
-    Write-Host "  │  [8] " -NoNewline -ForegroundColor DarkGray; Write-Host "Configurações         " -NoNewline -ForegroundColor Blue; Write-Host "Taxa de câmbio USD/BRL   │" -ForegroundColor DarkGray
-    Write-Host "  │  [0] " -NoNewline -ForegroundColor DarkGray; Write-Host "Sair                  " -NoNewline -ForegroundColor DarkGray; Write-Host "                         │" -ForegroundColor DarkGray
-    Write-Host "  │                                                   │" -ForegroundColor DarkGray
-    Write-Host "  └───────────────────────────────────────────────────┘" -ForegroundColor DarkGray
+    Write-Host "  ┌─── Menu ─────────────────────────────────────────┐" -ForegroundColor DarkGray
+    Write-Host "  │                                                  │" -ForegroundColor DarkGray
+    Write-Host "  │  [1] " -NoNewline -ForegroundColor DarkGray; Write-Host "Visão Geral        " -NoNewline -ForegroundColor White; Write-Host "Ver todas as mídias        │" -ForegroundColor DarkGray
+    Write-Host "  │  [2] " -NoNewline -ForegroundColor DarkGray; Write-Host "Trocar URL         " -NoNewline -ForegroundColor Yellow; Write-Host "Atualizar link de mídia    │" -ForegroundColor DarkGray
+    Write-Host "  │  [3] " -NoNewline -ForegroundColor DarkGray; Write-Host "Adicionar Mídia    " -NoNewline -ForegroundColor Green; Write-Host "Novo slot no site          │" -ForegroundColor DarkGray
+    Write-Host "  │  [4] " -NoNewline -ForegroundColor DarkGray; Write-Host "Remover Slot       " -NoNewline -ForegroundColor Red; Write-Host "Apagar um card             │" -ForegroundColor DarkGray
+    Write-Host "  │  [5] " -NoNewline -ForegroundColor DarkGray; Write-Host "Deploy             " -NoNewline -ForegroundColor Cyan; Write-Host "Sincronizar com GitHub     │" -ForegroundColor DarkGray
+    Write-Host "  │                                                  │" -ForegroundColor DarkGray
+    Write-Host "  │  [6] " -NoNewline -ForegroundColor DarkGray; Write-Host "WIPE Imagens       " -NoNewline -ForegroundColor DarkYellow; Write-Host "Limpar mídias IMG          │" -ForegroundColor DarkGray
+    Write-Host "  │  [7] " -NoNewline -ForegroundColor DarkGray; Write-Host "WIPE Vídeos        " -NoNewline -ForegroundColor DarkCyan; Write-Host "Limpar mídias VID          │" -ForegroundColor DarkGray
+    Write-Host "  │                                                  │" -ForegroundColor DarkGray
+    Write-Host "  │  [8] " -NoNewline -ForegroundColor DarkGray; Write-Host "Configurações      " -NoNewline -ForegroundColor Blue; Write-Host "Taxa de câmbio USD/BRL     │" -ForegroundColor DarkGray
+    Write-Host "  │  [0] " -NoNewline -ForegroundColor DarkGray; Write-Host "Sair               " -NoNewline -ForegroundColor DarkGray; Write-Host "                           │" -ForegroundColor DarkGray
+    Write-Host "  │                                                  │" -ForegroundColor DarkGray
+    Write-Host "  └──────────────────────────────────────────────────┘" -ForegroundColor DarkGray
 
     $option = Prompt-Choice "Opção" @("1","2","3","4","5","6","7","8","0")
 
