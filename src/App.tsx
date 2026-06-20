@@ -521,18 +521,39 @@ export default function App() {
                             const match = url.match(regExp);
                             return (match && match[2].length === 11) ? match[2] : null;
                           };
+                          const getTikTokId = (url: string) => {
+                            const match = url.match(/tiktok\.com\/.*video\/(\d+)/);
+                            return match ? match[1] : null;
+                          };
+                          
                           const ytId = getYouTubeId(item.mediaUrl);
-                          return ytId ? (
-                            <iframe 
-                              src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&showinfo=0&rel=0`}
-                              title="YouTube video player" 
-                              frameBorder="0" 
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 pointer-events-none"
-                            ></iframe>
-                          ) : (
-                            <video src={item.mediaUrl} autoPlay loop muted playsInline className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                          );
+                          const tkId = getTikTokId(item.mediaUrl);
+                          
+                          if (ytId) {
+                            return (
+                              <iframe 
+                                src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&showinfo=0&rel=0`}
+                                title="YouTube video player" 
+                                frameBorder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 pointer-events-none"
+                              ></iframe>
+                            );
+                          } else if (tkId) {
+                            return (
+                              <iframe 
+                                src={`https://www.tiktok.com/embed/v2/${tkId}`}
+                                title="TikTok video player"
+                                frameBorder="0"
+                                allow="encrypted-media"
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                              ></iframe>
+                            );
+                          } else {
+                            return (
+                              <video src={item.mediaUrl} autoPlay loop muted playsInline className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                            );
+                          }
                         })()
                       ) : (
                         <img src={item.mediaUrl} alt="Portfolio item" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
