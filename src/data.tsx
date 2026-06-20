@@ -227,7 +227,7 @@ export const artItems: PortfolioItem[] = [
 ];
 
 export const videoItems: PortfolioItem[] = [
-  { type: 'video', color: 'from-orange-200 to-yellow-200', iconColor: 'text-orange-600', icon: <Video className="w-10 h-10" />, double: true },
+  { type: 'video', color: 'from-orange-200 to-yellow-200', iconColor: 'text-orange-600', icon: <Video className="w-10 h-10" />, double: true , mediaUrl: 'https://youtu.be/Vb57YfiA1is?list=RDVb57YfiA1is' },
 ];
 
 export const nsfwItems: PortfolioItem[] = [
