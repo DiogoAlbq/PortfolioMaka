@@ -225,8 +225,6 @@ export const artItems: PortfolioItem[] = [
   { type: 'image', color: 'from-yellow-200 to-amber-200', iconColor: 'text-yellow-600', icon: <ImageIcon className="w-10 h-10" /> },
   { type: 'image', color: 'from-amber-200 to-orange-100', iconColor: 'text-amber-600', icon: <ImageIcon className="w-10 h-10" /> },
 
-  { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon className="w-10 h-10" />, double: true },
-
   { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon className="w-10 h-10" /> },
 
   { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon className="w-10 h-10" />, mediaUrl: 'https://res.cloudinary.com/dnbdnjpd4/image/upload/v1781967545/Tame_gkh52r.png' },
