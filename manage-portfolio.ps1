@@ -202,12 +202,13 @@ function Parse-PortfolioItems {
 }
 
 function Get-PortfolioStats {
-    $stats = @{ TotalItems = 0; WithUrl = 0; Empty = 0; Images = 0; Videos = 0 }
+    $stats = @{ TotalItems = 0; WithUrl = 0; Empty = 0; Images = 0; Videos = 0; Squares = 0; Horizontals = 0 }
     foreach ($cat in $global:arrays.Values) {
         $items = Parse-PortfolioItems $cat.Name
         foreach ($item in $items) {
             $stats.TotalItems++
             if ($item.Type -eq "image") { $stats.Images++ } else { $stats.Videos++ }
+            if ($item.Double) { $stats.Horizontals++ } else { $stats.Squares++ }
             if ($item.MediaUrl) { $stats.WithUrl++ } else { $stats.Empty++ }
         }
     }
@@ -401,6 +402,8 @@ function View-Stats {
     $tStr = $s.TotalItems.ToString().PadRight(4)
     $iStr = $s.Images.ToString().PadRight(4)
     $vStr = $s.Videos.ToString().PadRight(4)
+    $qStr = $s.Squares.ToString().PadRight(4)
+    $hStr = $s.Horizontals.ToString().PadRight(4)
     
     Write-BoxHeader -Title "Status do Portfólio" -Color "DarkCyan"
     
@@ -411,6 +414,12 @@ function View-Stats {
     Write-Host " Vídeos: " -NoNewline -ForegroundColor DarkCyan
     Write-Host $vStr -NoNewline -ForegroundColor Cyan
     Write-Host (" " * 10 + "│") -ForegroundColor DarkCyan
+
+    Write-Host "  │  Quadrados: " -NoNewline -ForegroundColor DarkCyan
+    Write-Host $qStr -NoNewline -ForegroundColor Gray
+    Write-Host " Horizontais: " -NoNewline -ForegroundColor DarkCyan
+    Write-Host $hStr -NoNewline -ForegroundColor Cyan
+    Write-Host (" " * 15 + "│") -ForegroundColor DarkCyan
 
     $wStr = $s.WithUrl.ToString().PadRight(4)
     $eStr = $s.Empty.ToString().PadRight(4)
@@ -440,21 +449,26 @@ function View-Items {
     } else {
         foreach ($item in $items) {
             $num = "[$($item.Index + 1)]".PadRight(4)
-            $typeTag = if ($item.Type -eq 'image') { "IMG" } else { "VID" }
-            $doubleTag = if ($item.Double) { "★" } else { " " }
+            if ($item.Double) {
+                $formatTag = "[HORIZONTAL]"
+                $tagColor = "Cyan"
+            } else {
+                $formatTag = "[QUADRADO]  "
+                $tagColor = "DarkGray"
+            }
             
             Write-Host "  │ " -NoNewline -ForegroundColor $LabelColor
             Write-Host "$num" -NoNewline -ForegroundColor Cyan
-            $colorItem = if ($item.Type -eq 'video') { "Cyan" } else { "Yellow" }
-            Write-Host " $typeTag$doubleTag " -NoNewline -ForegroundColor $colorItem
+            Write-Host " $formatTag " -NoNewline -ForegroundColor $tagColor
             
+            $urlSpace = 30
             if ($item.MediaUrl) {
                 $url = $item.MediaUrl
-                if ($url.Length -gt 36) { $url = $url.Substring(0,33) + "..." }
+                if ($url.Length -gt $urlSpace) { $url = $url.Substring(0, $urlSpace-3) + "..." }
                 Write-Host $url -NoNewline -ForegroundColor Green
-                Write-Host (" " * (36 - $url.Length) + " │") -ForegroundColor $LabelColor
+                Write-Host (" " * ($urlSpace - $url.Length) + " │") -ForegroundColor $LabelColor
             } else {
-                Write-Host "(vazio - sem mídia)$(' ' * 18)│" -ForegroundColor DarkGray
+                Write-Host "(vazio)$(' ' * ($urlSpace - 7))│" -ForegroundColor DarkGray
             }
         }
     }
@@ -647,10 +661,10 @@ while ($true) {
             Write-Host "`n  " -NoNewline
             $url = Read-Host "URL da mídia (vazio = card em branco)"
 
-            Write-Host "`n  [S] Slot duplo (ocupa 2 colunas — ideal para vídeos horizontais)" -ForegroundColor DarkGray
-            Write-Host "  [N] Slot normal" -ForegroundColor DarkGray
-            $doubleChoice = Prompt-ChoiceKey "`n  Tamanho [S/N]:" @("S","N")
-            $isDouble = ($doubleChoice -eq "S")
+            Write-Host "`n  [H] Slot duplo (Card Horizontal/Panorâmico)" -ForegroundColor DarkGray
+            Write-Host "  [N] Slot normal (Card Quadrado 4x4)" -ForegroundColor DarkGray
+            $doubleChoice = Prompt-ChoiceKey "`n  Formato [H/N]:" @("H","N")
+            $isDouble = ($doubleChoice -eq "H")
 
             if (Add-Item -ArrayName $cat.Name -Type $type -MediaUrl $url -Double $isDouble) {
                 Write-OK "`nMídia adicionada localmente."
@@ -737,5 +751,6 @@ while ($true) {
         }
     }
 }
+
 
 

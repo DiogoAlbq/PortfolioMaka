@@ -220,24 +220,14 @@ export interface PortfolioItem {
 }
 
 export const artItems: PortfolioItem[] = [
-  { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon className="w-10 h-10" />  },
-  { type: 'image', color: 'from-yellow-200 to-amber-100', iconColor: 'text-amber-600', icon: <ImageIcon className="w-10 h-10" />  },
-  { type: 'image', color: 'from-yellow-200 to-amber-200', iconColor: 'text-yellow-600', icon: <ImageIcon className="w-10 h-10" /> },
-  { type: 'image', color: 'from-amber-200 to-orange-100', iconColor: 'text-amber-600', icon: <ImageIcon className="w-10 h-10" /> },
-
-  { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon className="w-10 h-10" /> },
-
-  { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon className="w-10 h-10" />, mediaUrl: 'https://res.cloudinary.com/dnbdnjpd4/image/upload/v1781967545/Tame_gkh52r.png' },
-];
+  ];
 
 export const videoItems: PortfolioItem[] = [
   { type: 'video', color: 'from-orange-200 to-yellow-200', iconColor: 'text-orange-600', icon: <Video className="w-10 h-10" />, double: true  },
 ];
 
 export const nsfwItems: PortfolioItem[] = [
-  { type: 'image', color: 'from-red-200 to-rose-200', iconColor: 'text-red-600', icon: <ImageIcon className="w-10 h-10" />  },
-  { type: 'image', color: 'from-rose-200 to-red-200', iconColor: 'text-red-700', icon: <ImageIcon className="w-10 h-10" /> }
-];
+  ];
 
 export const heroBgImages = [
   "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
