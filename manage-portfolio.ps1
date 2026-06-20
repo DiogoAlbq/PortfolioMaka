@@ -1,39 +1,49 @@
 # =============================================================================
-#  MAKA Portfolio Manager - Gerenciador de Midias do Portfolio
+#  MAKA Portfolio Manager - Gerenciador de Midias do Portfolio (v3.0)
 #  Uso: .\manage-portfolio.ps1
 # =============================================================================
 
 $ErrorActionPreference = "Stop"
 $dataFile = Join-Path $PSScriptRoot "src\data.tsx"
 
-# --- Interface Visual (UI) ---
+# --- Interface Visual (UI) Premium ---
 function Write-Header { 
     Clear-Host
     Write-Host ""
-    Write-Host "  ███╗   ███╗ █████╗ ██╗  ██╗███████╗" -ForegroundColor Cyan
-    Write-Host "  ████╗ ████║██╔══██╗██║ ██╔╝██╔════╝" -ForegroundColor Cyan
-    Write-Host "  ██╔████╔██║███████║█████╔╝ ███████╗" -ForegroundColor Yellow
-    Write-Host "  ██║╚██╔╝██║██╔══██║██╔═██╗ ╚════██║" -ForegroundColor Yellow
-    Write-Host "  ██║ ╚═╝ ██║██║  ██║██║  ██╗███████║" -ForegroundColor Magenta
-    Write-Host "  ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝" -ForegroundColor Magenta
+    Write-Host "  ╔════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "  ║  ███╗   ███╗ █████╗ ██╗  ██╗███████╗       ║" -ForegroundColor Cyan
+    Write-Host "  ║  ████╗ ████║██╔══██╗██║ ██╔╝██╔════╝       ║" -ForegroundColor Cyan
+    Write-Host "  ║  ██╔████╔██║███████║█████╔╝ ███████╗       ║" -ForegroundColor Yellow
+    Write-Host "  ║  ██║╚██╔╝██║██╔══██║██╔═██╗ ╚════██║       ║" -ForegroundColor Yellow
+    Write-Host "  ║  ██║ ╚═╝ ██║██║  ██║██║  ██╗███████║       ║" -ForegroundColor Magenta
+    Write-Host "  ║  ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝       ║" -ForegroundColor Magenta
+    Write-Host "  ╚════════════════════════════════════════════╝" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "       PORTFOLIO MANAGER v2.0       " -ForegroundColor White -BackgroundColor DarkMagenta
-    Write-Host "========================================" -ForegroundColor DarkGray
+    Write-Host "           PORTFOLIO MANAGER v3.0           " -ForegroundColor White -BackgroundColor DarkMagenta
+    Write-Host "  ──────────────────────────────────────────────" -ForegroundColor DarkGray
 }
 
 function Write-Success($msg) { Write-Host "  [ v ] $msg" -ForegroundColor Green }
 function Write-Warn($msg) { Write-Host "  [ ! ] $msg" -ForegroundColor Yellow }
 function Write-Err($msg) { Write-Host "  [ x ] $msg" -ForegroundColor Red }
-function Write-Sep { Write-Host "  ----------------------------------------" -ForegroundColor DarkGray }
+function Write-Sep { Write-Host "  ──────────────────────────────────────────────" -ForegroundColor DarkGray }
 
 function Pause-Screen {
     Write-Host ""
-    Read-Host "  Pressione [ENTER] para continuar..." | Out-Null
+    Read-Host "  [ Pressione ENTER para continuar ]" | Out-Null
+}
+
+function Prompt-Choice($message, $validOptions) {
+    while ($true) {
+        $choice = Read-Host "  $message"
+        if ($validOptions -contains $choice) { return $choice }
+        Write-Warn "Opção inválida. Tente novamente."
+    }
 }
 
 # --- Leitura do data.tsx ---
 function Get-DataContent {
-    if (-not (Test-Path $dataFile)) { Write-Err "Arquivo nao encontrado: $dataFile"; exit 1 }
+    if (-not (Test-Path $dataFile)) { Write-Err "Arquivo não encontrado: $dataFile"; exit 1 }
     return Get-Content $dataFile -Raw -Encoding UTF8
 }
 
@@ -67,6 +77,7 @@ function Parse-PortfolioItems {
             MediaUrl = $mediaUrl
             Double = $hasDouble
             Raw = $m.Value
+            ArrayName = $ArrayName
         }
         $index++
     }
@@ -83,11 +94,11 @@ function Show-Items {
     Write-Sep
     foreach ($item in $items) {
         $num = ($item.Index + 1).ToString().PadLeft(2, '0')
-        $typeLabel = if ($item.Type -eq 'image') { "Imagem" } else { "Video " }
-        $urlDisplay = if ($item.MediaUrl) { $item.MediaUrl } else { "(sem midia vinculada)" }
+        $typeLabel = if ($item.Type -eq 'image') { "Imagem" } else { "Vídeo " }
+        $urlDisplay = if ($item.MediaUrl) { $item.MediaUrl } else { "(vazio - sem mídia vinculada)" }
         $doubleTag = if ($item.Double) { " [DESTAQUE]" } else { "" }
         
-        Write-Host "  [$num] " -NoNewline -ForegroundColor Yellow
+        Write-Host "  [$num] " -NoNewline -ForegroundColor Cyan
         Write-Host "$typeLabel$doubleTag" -NoNewline -ForegroundColor White
         Write-Host " | " -NoNewline -ForegroundColor DarkGray
         if ($item.MediaUrl) {
@@ -105,11 +116,11 @@ function Set-ItemUrl {
     $content = Get-DataContent
     $pattern = "export const ${ArrayName}: PortfolioItem\[\] = \[([\s\S]*?)\];"
     $match = [regex]::Match($content, $pattern)
-    if (-not $match.Success) { Write-Err "Array '$ArrayName' nao encontrado."; return $false }
+    if (-not $match.Success) { return $false }
     
     $block = $match.Groups[1].Value
     $itemMatches = [regex]::Matches($block, '\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}')
-    if ($ItemIndex -lt 0 -or $ItemIndex -ge $itemMatches.Count) { Write-Err "Indice invalido."; return $false }
+    if ($ItemIndex -lt 0 -or $ItemIndex -ge $itemMatches.Count) { return $false }
     
     $oldItem = $itemMatches[$ItemIndex].Value
     
@@ -150,11 +161,11 @@ function Remove-Item-FromArray {
     $content = Get-DataContent
     $pattern = "export const ${ArrayName}: PortfolioItem\[\] = \[([\s\S]*?)\];"
     $match = [regex]::Match($content, $pattern)
-    if (-not $match.Success) { Write-Err "Array '$ArrayName' nao encontrado."; return $false }
+    if (-not $match.Success) { return $false }
     
     $block = $match.Groups[1].Value
     $itemMatches = [regex]::Matches($block, '\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}')
-    if ($ItemIndex -lt 0 -or $ItemIndex -ge $itemMatches.Count) { Write-Err "Indice invalido."; return $false }
+    if ($ItemIndex -lt 0 -or $ItemIndex -ge $itemMatches.Count) { return $false }
     
     $oldItem = $itemMatches[$ItemIndex].Value
     $newBlock = $block -replace [regex]::Escape($oldItem) + ",?\s*", ""
@@ -163,9 +174,41 @@ function Remove-Item-FromArray {
     return $true
 }
 
-# --- Deploy Automatico (Oculto/Limpo) ---
+# --- Wipe Functions (Limpeza em Massa) ---
+function Wipe-MediaUrls {
+    param([string]$TargetType)
+    $count = 0
+    foreach ($cat in $arrays.Values) {
+        $items = Parse-PortfolioItems $cat.Name
+        foreach ($item in $items) {
+            if ($item.Type -eq $TargetType -and $item.MediaUrl) {
+                Set-ItemUrl -ArrayName $cat.Name -ItemIndex $item.Index -NewUrl "" | Out-Null
+                $count++
+            }
+        }
+    }
+    return $count
+}
+
+function Wipe-EntireSlots {
+    param([string]$TargetType)
+    $count = 0
+    foreach ($cat in $arrays.Values) {
+        # Lê de trás pra frente para não quebrar os índices enquanto deleta
+        $items = Parse-PortfolioItems $cat.Name
+        for ($i = $items.Count - 1; $i -ge 0; $i--) {
+            if ($items[$i].Type -eq $TargetType) {
+                Remove-Item-FromArray -ArrayName $cat.Name -ItemIndex $i | Out-Null
+                $count++
+            }
+        }
+    }
+    return $count
+}
+
+# --- Deploy Automatico ---
 function Deploy-Changes {
-    Write-Host "`n  [ Iniciando Sincronizacao Automatica com o GitHub ]" -ForegroundColor Cyan
+    Write-Host "`n  [ Iniciando Sincronização Automática com o GitHub ]" -ForegroundColor Cyan
     
     try {
         Push-Location $PSScriptRoot
@@ -179,26 +222,27 @@ function Deploy-Changes {
         }
         Write-Host "OK!" -ForegroundColor Green
         
-        Write-Host "  > Registrando alteracoes no Git... " -NoNewline -ForegroundColor DarkGray
-        git add src/data.tsx index.html 2>&1 | Out-Null
+        Write-Host "  > Registrando alterações no Git... " -NoNewline -ForegroundColor DarkGray
+        git add src/data.tsx index.html src/App.tsx 2>&1 | Out-Null
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-        git commit -m "Auto-update portfolio media: $timestamp" 2>&1 | Out-Null
+        git commit -m "Auto-update portfolio media via Manager v3: $timestamp" 2>&1 | Out-Null
         Write-Host "OK!" -ForegroundColor Green
         
         Write-Host "  > Enviando para o servidor do site... " -NoNewline -ForegroundColor DarkGray
         $pushOutput = git push origin main 2>&1
         if ($LASTEXITCODE -ne 0) { 
             Write-Host "FALHOU!" -ForegroundColor Red
-            Write-Err "Erro de rede ou permissao ao enviar para o GitHub."
+            Write-Err "Erro de rede ou permissão ao enviar para o GitHub."
             Pop-Location; return 
         }
         Write-Host "OK!" -ForegroundColor Green
         
-        Write-Host "`n  ========================================================" -ForegroundColor Cyan
+        Write-Host "`n  ╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
         Write-Success "Deploy disparado com SUCESSO!"
-        Write-Host "  O site atualizado estara no ar em ~1 minuto em:" -ForegroundColor White
-        Write-Host "  https://DiogoAlbq.github.io/PortfolioMaka/" -ForegroundColor Yellow
-        Write-Host "  ========================================================" -ForegroundColor Cyan
+        Write-Host "  ║ O site será atualizado em ~1 a 3 minutos em:                   ║" -ForegroundColor White
+        Write-Host "  ║ https://DiogoAlbq.github.io/PortfolioMaka/                     ║" -ForegroundColor Yellow
+        Write-Host "  ║ Dica: Pressione Ctrl + F5 no navegador para forçar a limpesa   ║" -ForegroundColor DarkGray
+        Write-Host "  ╚════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
         
         Pop-Location
     } catch {
@@ -209,22 +253,21 @@ function Deploy-Changes {
 
 # --- Dicionario de Categorias ---
 $arrays = @{
-    "1" = @{ Name = "artItems"; Label = "Artes (Ilustracoes)" }
-    "2" = @{ Name = "videoItems"; Label = "Videos" }
+    "1" = @{ Name = "artItems"; Label = "Artes (Ilustrações)" }
+    "2" = @{ Name = "videoItems"; Label = "Vídeos" }
     "3" = @{ Name = "nsfwItems"; Label = "NSFW (18+)" }
 }
 
 function Select-Category {
     Write-Host "`n  Selecione a Galeria:" -ForegroundColor White
-    Write-Host "  [1] Artes (Ilustracoes)" -ForegroundColor Yellow
-    Write-Host "  [2] Videos" -ForegroundColor Yellow
+    Write-Host "  [1] Artes (Ilustrações)" -ForegroundColor Yellow
+    Write-Host "  [2] Vídeos" -ForegroundColor Yellow
     Write-Host "  [3] NSFW (18+)" -ForegroundColor Yellow
     Write-Host "  [0] Voltar" -ForegroundColor DarkGray
     
-    $choice = Read-Host "`n  Sua opcao"
+    $choice = Prompt-Choice "Sua opção" @("1","2","3","0")
     if ($choice -eq "0") { return $null }
-    if ($arrays.ContainsKey($choice)) { return $arrays[$choice] }
-    Write-Warn "Opcao invalida."; return $null
+    return $arrays[$choice]
 }
 
 # ========================
@@ -232,15 +275,16 @@ function Select-Category {
 # ========================
 while ($true) {
     Write-Header
-    Write-Host "  Menu de Acoes:" -ForegroundColor White
-    Write-Host "  [1] " -NoNewline -ForegroundColor Cyan; Write-Host "Visao Geral (Listar todas as midias)" -ForegroundColor White
-    Write-Host "  [2] " -NoNewline -ForegroundColor Yellow; Write-Host "Trocar URL de uma midia existente" -ForegroundColor White
-    Write-Host "  [3] " -NoNewline -ForegroundColor Green; Write-Host "Adicionar NOVA midia ao site" -ForegroundColor White
-    Write-Host "  [4] " -NoNewline -ForegroundColor Red; Write-Host "Remover uma midia do site" -ForegroundColor White
-    Write-Host "  [5] " -NoNewline -ForegroundColor Magenta; Write-Host "Forcar Sincronizacao / Deploy" -ForegroundColor White
+    Write-Host "  Menu de Ações Principais:" -ForegroundColor White
+    Write-Host "  [1] " -NoNewline -ForegroundColor Cyan; Write-Host "Visão Geral (Listar todas as mídias)" -ForegroundColor White
+    Write-Host "  [2] " -NoNewline -ForegroundColor Yellow; Write-Host "Trocar URL de uma mídia existente" -ForegroundColor White
+    Write-Host "  [3] " -NoNewline -ForegroundColor Green; Write-Host "Adicionar NOVA mídia ao site" -ForegroundColor White
+    Write-Host "  [4] " -NoNewline -ForegroundColor Red; Write-Host "Remover um slot (mídia) do site" -ForegroundColor White
+    Write-Host "  [5] " -NoNewline -ForegroundColor Magenta; Write-Host "Forçar Sincronização / Deploy" -ForegroundColor White
+    Write-Host "  [6] " -NoNewline -ForegroundColor DarkRed; Write-Host "ZONA DE PERIGO (Wipe em Massa)" -ForegroundColor White
     Write-Host "  [0] " -NoNewline -ForegroundColor DarkGray; Write-Host "Sair do Gerenciador" -ForegroundColor White
     
-    $option = Read-Host "`n  O que deseja fazer?"
+    $option = Prompt-Choice "`n  O que deseja fazer?" @("1","2","3","4","5","6","0")
     
     switch ($option) {
         "1" {
@@ -253,7 +297,7 @@ while ($true) {
         }
         "2" {
             Write-Header
-            Write-Host "  > TROCAR URL DE MIDIA <" -ForegroundColor Yellow
+            Write-Host "  ► TROCAR URL DE MÍDIA ◄" -ForegroundColor Yellow
             $cat = Select-Category
             if ($null -eq $cat) { continue }
             
@@ -262,16 +306,18 @@ while ($true) {
             $items = Parse-PortfolioItems $cat.Name
             if ($items.Count -eq 0) { Pause-Screen; continue }
             
-            $num = Read-Host "`n  Qual o NUMERO da midia que deseja alterar?"
-            $idx = [int]$num - 1
-            if ($idx -lt 0 -or $idx -ge $items.Count) { Write-Err "Numero invalido."; Pause-Screen; continue }
+            $numText = Read-Host "`n  Qual o NÚMERO da mídia que deseja alterar? (0 para cancelar)"
+            if (-not [int]::TryParse($numText, [ref]$null)) { Write-Warn "Número inválido!"; Start-Sleep 1; continue }
+            $idx = [int]$numText - 1
+            if ($numText -eq "0") { continue }
+            if ($idx -lt 0 -or $idx -ge $items.Count) { Write-Err "Número inexistente."; Start-Sleep 1; continue }
             
             Write-Host "`n  URL atual: " -NoNewline -ForegroundColor DarkGray
             $currentUrl = $items[$idx].MediaUrl
             if ($currentUrl) { Write-Host $currentUrl -ForegroundColor Green }
             else { Write-Host "(vazio)" -ForegroundColor DarkGray }
             
-            Write-Host "  (Dica: Deixe vazio e aperte ENTER para apenas remover a imagem atual do slot)" -ForegroundColor DarkGray
+            Write-Host "  (Dica: Deixe vazio e aperte ENTER para remover apenas a mídia, mantendo o card)" -ForegroundColor DarkGray
             $newUrl = Read-Host "  Cole a NOVA URL"
             
             if (Set-ItemUrl -ArrayName $cat.Name -ItemIndex $idx -NewUrl $newUrl) {
@@ -282,32 +328,32 @@ while ($true) {
         }
         "3" {
             Write-Header
-            Write-Host "  > ADICIONAR NOVA MIDIA <" -ForegroundColor Green
+            Write-Host "  ► ADICIONAR NOVA MÍDIA ◄" -ForegroundColor Green
             $cat = Select-Category
             if ($null -eq $cat) { continue }
             
-            Write-Host "`n  E uma Imagem ou Video?" -ForegroundColor White
+            Write-Host "`n  Qual o tipo do conteúdo que está adicionando?" -ForegroundColor White
             Write-Host "  [1] Imagem" -ForegroundColor Yellow
-            Write-Host "  [2] Video" -ForegroundColor Yellow
-            $typeChoice = Read-Host "  Opcao"
+            Write-Host "  [2] Vídeo (TikTok, YouTube ou MP4)" -ForegroundColor Yellow
+            $typeChoice = Prompt-Choice "Opção" @("1","2")
             $type = if ($typeChoice -eq "2") { "video" } else { "image" }
             
-            Write-Host "`n  Cole o link direto da imagem/video. (Pode deixar vazio para adicionar um card em branco provisorio)" -ForegroundColor DarkGray
+            Write-Host "`n  Cole o link direto da mídia. (Pode deixar vazio para adicionar um card em branco provisório)" -ForegroundColor DarkGray
             $url = Read-Host "  URL"
             
-            Write-Host "`n  Deseja que esse item ocupe o espaco de 2 colunas no site? (ideal para imagens horizontais)" -ForegroundColor DarkGray
-            $doubleChoice = Read-Host "  (S/N)"
+            Write-Host "`n  Deseja que esse item ocupe o espaço de 2 colunas no site? (ideal para vídeos horizontais)" -ForegroundColor DarkGray
+            $doubleChoice = Prompt-Choice "(S/N)" @("s","S","n","N")
             $isDouble = $doubleChoice -match "^[sS]"
             
             if (Add-Item -ArrayName $cat.Name -Type $type -MediaUrl $url -Double $isDouble) {
-                Write-Success "Midia adicionada localmente!"
+                Write-Success "Mídia adicionada localmente!"
                 Deploy-Changes
             }
             Pause-Screen
         }
         "4" {
             Write-Header
-            Write-Host "  > REMOVER MIDIA <" -ForegroundColor Red
+            Write-Host "  ► REMOVER SLOT DE MÍDIA ◄" -ForegroundColor Red
             $cat = Select-Category
             if ($null -eq $cat) { continue }
             
@@ -316,18 +362,20 @@ while ($true) {
             $items = Parse-PortfolioItems $cat.Name
             if ($items.Count -eq 0) { Pause-Screen; continue }
             
-            $num = Read-Host "`n  Qual o NUMERO da midia que deseja REMOVER permanentemente?"
-            $idx = [int]$num - 1
-            if ($idx -lt 0 -or $idx -ge $items.Count) { Write-Err "Numero invalido."; Pause-Screen; continue }
+            $numText = Read-Host "`n  Qual o NÚMERO do slot que deseja DELETAR permanentemente? (0 para cancelar)"
+            if (-not [int]::TryParse($numText, [ref]$null)) { Write-Warn "Número inválido!"; Start-Sleep 1; continue }
+            $idx = [int]$numText - 1
+            if ($numText -eq "0") { continue }
+            if ($idx -lt 0 -or $idx -ge $items.Count) { Write-Err "Número inexistente."; Start-Sleep 1; continue }
             
-            $confirm = Read-Host "`n  TEM CERTEZA que deseja apagar o slot $num? (S/N)"
+            $confirm = Prompt-Choice "`n  TEM CERTEZA que deseja apagar o slot $($numText)? (S/N)" @("s","S","n","N")
             if ($confirm -match "^[sS]") {
                 if (Remove-Item-FromArray -ArrayName $cat.Name -ItemIndex $idx) {
                     Write-Success "Slot removido localmente!"
                     Deploy-Changes
                 }
             } else {
-                Write-Warn "Acao cancelada."
+                Write-Warn "Ação cancelada."
             }
             Pause-Screen
         }
@@ -336,13 +384,56 @@ while ($true) {
             Deploy-Changes
             Pause-Screen
         }
-        "0" {
-            Write-Host "`n  Saindo do gerenciador... Ate a proxima, Maka! `n" -ForegroundColor Cyan
-            break
+        "6" {
+            # ZONA DE PERIGO
+            while ($true) {
+                Write-Header
+                Write-Host "  ► ZONA DE PERIGO (LIMPEZA EM MASSA) ◄" -ForegroundColor DarkRed -BackgroundColor Gray
+                Write-Host "`n  Escolha o que deseja fazer:" -ForegroundColor White
+                Write-Host "  [1] " -NoNewline -ForegroundColor Yellow; Write-Host "Apagar todas as URLs de IMAGENS (Artes/NSFW)" -ForegroundColor White
+                Write-Host "  [2] " -NoNewline -ForegroundColor Yellow; Write-Host "Apagar todas as URLs de VÍDEOS" -ForegroundColor White
+                Write-Host "  [3] " -NoNewline -ForegroundColor Red; Write-Host "Deletar COMPLETAMENTE todos os slots de IMAGENS" -ForegroundColor White
+                Write-Host "  [4] " -NoNewline -ForegroundColor Red; Write-Host "Deletar COMPLETAMENTE todos os slots de VÍDEOS" -ForegroundColor White
+                Write-Host "  [0] " -NoNewline -ForegroundColor DarkGray; Write-Host "Voltar com segurança" -ForegroundColor White
+                
+                $wipeOpt = Prompt-Choice "`n  Opção" @("1","2","3","4","0")
+                if ($wipeOpt -eq "0") { break }
+                
+                # Validações de confirmação dupla
+                Write-Host "`n  ╔════════════════════════════════════════════════════════╗" -ForegroundColor Red
+                Write-Host "  ║ AVISO: Esta é uma operação destrutiva irreversível!    ║" -ForegroundColor Red
+                Write-Host "  ╚════════════════════════════════════════════════════════╝" -ForegroundColor Red
+                
+                $targetType = if ($wipeOpt -in @("1","3")) { "image" } else { "video" }
+                $actionType = if ($wipeOpt -in @("1","2")) { "Zerar URLs (limpar mídias mas manter cartões na grade)" } else { "Deletar a existência dos slots (a grade vai encolher)" }
+                
+                Write-Host "  Ação: " -NoNewline -ForegroundColor White; Write-Host $actionType -ForegroundColor Yellow
+                Write-Host "  Alvos: " -NoNewline -ForegroundColor White; Write-Host "Todos os itens do tipo '$targetType'" -ForegroundColor Yellow
+                
+                $securityConfirm = Read-Host "`n  Digite 'CONFIRMAR' com letras maiúsculas para prosseguir, ou ENTER para cancelar"
+                if ($securityConfirm -cne "CONFIRMAR") {
+                    Write-Warn "Limpeza abortada por segurança."
+                    Start-Sleep 2
+                    continue
+                }
+                
+                # Executa
+                $count = 0
+                if ($wipeOpt -in @("1","2")) {
+                    $count = Wipe-MediaUrls -TargetType $targetType
+                } else {
+                    $count = Wipe-EntireSlots -TargetType $targetType
+                }
+                
+                Write-Success "Operação concluída! $count itens foram afetados."
+                Deploy-Changes
+                Pause-Screen
+                break
+            }
         }
-        default {
-            Write-Warn "Opcao invalida. Tente novamente."
-            Start-Sleep -Seconds 1
+        "0" {
+            Write-Host "`n  Saindo do gerenciador... Até a próxima, Maka! `n" -ForegroundColor Cyan
+            break
         }
     }
 }
