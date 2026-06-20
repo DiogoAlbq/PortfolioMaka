@@ -46,11 +46,29 @@ interface Plan {
 export default function App() {
   const [activeTab, setActiveTab] = useState<'digital' | 'special'>('digital');
   const [activePortfolioTab, setActivePortfolioTab] = useState<'all' | 'video' | 'nsfw'>('all');
-  const [currency, setCurrency] = useState<'BRL' | 'USD'>('BRL');
-  const [language, setLanguage] = useState<'PT' | 'EN'>('PT');
+  
+  const [currency, setCurrency] = useState<'BRL' | 'USD'>(() => {
+    const saved = localStorage.getItem('maka_currency');
+    return (saved === 'USD' || saved === 'BRL') ? saved : 'BRL';
+  });
+  
+  const [language, setLanguage] = useState<'PT' | 'EN'>(() => {
+    const saved = localStorage.getItem('maka_language');
+    return (saved === 'PT' || saved === 'EN') ? saved : 'PT';
+  });
+  
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('maka_darkMode');
+    if (saved !== null) return saved === 'true';
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => { localStorage.setItem('maka_currency', currency); }, [currency]);
+  useEffect(() => { localStorage.setItem('maka_language', language); }, [language]);
+  useEffect(() => { localStorage.setItem('maka_darkMode', isDarkMode.toString()); }, [isDarkMode]);
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [heroBgIndex, setHeroBgIndex] = useState(0);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [nsfwDialogOpen, setNsfwDialogOpen] = useState(false);
   const [nsfwTargetUrl, setNsfwTargetUrl] = useState('');
   const [showNsfwPortfolio, setShowNsfwPortfolio] = useState(false);
@@ -533,7 +551,7 @@ export default function App() {
                             return (
                               <iframe 
                                 src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&showinfo=0&rel=0`}
-                                title="YouTube video player" 
+                                title={`YouTube video player - item ${i + 1}`} 
                                 frameBorder="0" 
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 pointer-events-none"
@@ -543,7 +561,7 @@ export default function App() {
                             return (
                               <iframe 
                                 src={`https://www.tiktok.com/embed/v2/${tkId}`}
-                                title="TikTok video player"
+                                title={`TikTok video player - item ${i + 1}`}
                                 frameBorder="0"
                                 allow="encrypted-media"
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
@@ -556,7 +574,7 @@ export default function App() {
                           }
                         })()
                       ) : (
-                        <img src={item.mediaUrl} alt="Portfolio item" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                        <img src={item.mediaUrl} alt={`Portfolio artwork ${i + 1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                       )
                     ) : (
                       <div className="group-hover:scale-110 transition-transform duration-500">{item.icon}</div>

@@ -282,9 +282,10 @@ while ($true) {
     Write-Host "  [4] " -NoNewline -ForegroundColor Red; Write-Host "Remover um slot (mídia) do site" -ForegroundColor White
     Write-Host "  [5] " -NoNewline -ForegroundColor Magenta; Write-Host "Forçar Sincronização / Deploy" -ForegroundColor White
     Write-Host "  [6] " -NoNewline -ForegroundColor DarkRed; Write-Host "ZONA DE PERIGO (Wipe em Massa)" -ForegroundColor White
+    Write-Host "  [7] " -NoNewline -ForegroundColor Blue; Write-Host "Configurações do Site (Taxa de Câmbio)" -ForegroundColor White
     Write-Host "  [0] " -NoNewline -ForegroundColor DarkGray; Write-Host "Sair do Gerenciador" -ForegroundColor White
     
-    $option = Prompt-Choice "`n  O que deseja fazer?" @("1","2","3","4","5","6","0")
+    $option = Prompt-Choice "`n  O que deseja fazer?" @("1","2","3","4","5","6","7","0")
     
     switch ($option) {
         "1" {
@@ -430,6 +431,34 @@ while ($true) {
                 Pause-Screen
                 break
             }
+        }
+        "7" {
+            Write-Header
+            Write-Host "  ► CONFIGURAÇÕES DO SITE ◄" -ForegroundColor Blue
+            $content = Get-DataContent
+            $pattern = "export const exchangeRate = ([\d\.]+);"
+            $match = [regex]::Match($content, $pattern)
+            
+            if ($match.Success) {
+                $currentRate = $match.Groups[1].Value
+                Write-Host "`n  Taxa de Câmbio Atual (USD para BRL): " -NoNewline -ForegroundColor White
+                Write-Host "R$ $currentRate" -ForegroundColor Green
+                
+                $newRate = Read-Host "`n  Digite a NOVA taxa de câmbio (ex: 5.80) ou deixe vazio para cancelar"
+                if (-not [string]::IsNullOrWhiteSpace($newRate)) {
+                    if ($newRate -match "^[\d\.]+$") {
+                        $newContent = $content -replace "export const exchangeRate = [\d\.]+;", "export const exchangeRate = $newRate;"
+                        Set-Content $dataFile -Value $newContent -Encoding UTF8 -NoNewline
+                        Write-Success "Taxa de câmbio atualizada localmente!"
+                        Deploy-Changes
+                    } else {
+                        Write-Err "Valor inválido. Use apenas números e ponto (ex: 5.50)."
+                    }
+                }
+            } else {
+                Write-Err "Não foi possível encontrar a variável exchangeRate em data.tsx."
+            }
+            Pause-Screen
         }
         "0" {
             Write-Host "`n  Saindo do gerenciador... Até a próxima, Maka! `n" -ForegroundColor Cyan
