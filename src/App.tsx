@@ -550,26 +550,26 @@ export default function App() {
                           if (ytId) {
                             return (
                               <iframe 
-                                src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&showinfo=0&rel=0`}
+                                src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=1&rel=0&vq=hd720`}
                                 title={`YouTube video player - item ${i + 1}`} 
                                 frameBorder="0" 
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 pointer-events-none"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" 
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                               ></iframe>
                             );
                           } else if (tkId) {
                             return (
                               <iframe 
-                                src={`https://www.tiktok.com/embed/v2/${tkId}`}
+                                src={`https://www.tiktok.com/embed/v2/${tkId}?autoplay=1&mute=1`}
                                 title={`TikTok video player - item ${i + 1}`}
                                 frameBorder="0"
-                                allow="encrypted-media"
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                               ></iframe>
                             );
                           } else {
                             return (
-                              <video src={item.mediaUrl} autoPlay loop muted playsInline className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                              <video src={item.mediaUrl} autoPlay loop muted controls playsInline className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                             );
                           }
                         })()
