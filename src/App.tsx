@@ -278,6 +278,7 @@ export default function App() {
               <button
                 onClick={() => setIsDarkMode(!isDarkMode)}
                 className={`p-2 rounded-full transition-colors ml-2 ${theme.navLink}`}
+                aria-label={isDarkMode ? "Ativar tema claro" : "Ativar tema escuro"}
               >
                 {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
@@ -287,12 +288,14 @@ export default function App() {
               <button
                 onClick={() => setIsDarkMode(!isDarkMode)}
                 className={`p-2 rounded-full transition-colors ${theme.navLink}`}
+                aria-label={isDarkMode ? "Ativar tema claro" : "Ativar tema escuro"}
               >
                 {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
               <button 
                 className={`p-2 transition-colors ${theme.navLink}`}
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label={isMobileMenuOpen ? "Fechar menu" : "Abrir menu"}
               >
                 {isMobileMenuOpen ? <X /> : <Menu />}
               </button>
