@@ -1,32 +1,25 @@
 ﻿# =============================================================================
-#  MAKA Portfolio Manager v5.0
+#  MAKA Portfolio Manager v6.0
 #  Gerenciador de Mídias do Portfólio — github.com/DiogoAlbq/PortfolioMaka
 #  Uso: .\manage-portfolio.ps1
 # =============================================================================
 
 $ErrorActionPreference = "Stop"
 $dataFile = Join-Path $PSScriptRoot "src\data.tsx"
+$backupFile = Join-Path $PSScriptRoot "src\data.tsx.bak"
 $siteUrl  = "https://DiogoAlbq.github.io/PortfolioMaka/"
 $global:lastAction = ""
 
-# UTF-8 with BOM Encoding nativo (resolve problemas de corrupção do Set-Content)
 $global:utf8Bom = New-Object System.Text.UTF8Encoding $true
 
-# =============================================================================
-#  DICIONÁRIO GLOBAL DE CATEGORIAS
-# =============================================================================
 $global:arrays = @{
     "1" = @{ Name = "artItems";   Label = "Artes (Ilustrações)"; Type = "image"; Color = "Yellow"  }
     "2" = @{ Name = "videoItems"; Label = "Vídeos";              Type = "video"; Color = "Cyan"    }
     "3" = @{ Name = "nsfwItems";  Label = "NSFW (18+)";          Type = "image"; Color = "Red"     }
 }
 
-# =============================================================================
-#  UI & CONSOLE HELPERS
-# =============================================================================
-
 function Write-BoxHeader {
-    param([string]$Title, [string]$Color = "Cyan", [int]$Width = 52)
+    param([string]$Title, [string]$Color = "Cyan", [int]$Width = 54)
     $innerPad = $Width - 2
     if ($Title) {
         $prefix = "─── $Title "
@@ -39,7 +32,7 @@ function Write-BoxHeader {
 }
 
 function Write-BoxLine {
-    param([string]$Content, [string]$Color = "White", [string]$BorderColor = "Cyan", [int]$Width = 52)
+    param([string]$Content, [string]$Color = "White", [string]$BorderColor = "Cyan", [int]$Width = 54)
     $innerPad = $Width - 2
     $pad = $innerPad - $Content.Length - 2 
     if ($pad -lt 0) { $pad = 0 }
@@ -50,7 +43,7 @@ function Write-BoxLine {
 }
 
 function Write-BoxFooter {
-    param([string]$Color = "Cyan", [int]$Width = 52)
+    param([string]$Color = "Cyan", [int]$Width = 54)
     $innerPad = $Width - 2
     Write-Host "  └$(""─"" * $innerPad)┘" -ForegroundColor $Color
 }
@@ -59,34 +52,34 @@ function Write-Header {
     param([string]$Subtitle = "")
     Clear-Host
     Write-Host ""
-    Write-Host "  ╔══════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "  ║                                                  ║" -ForegroundColor Cyan
+    Write-Host "  ╔════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "  ║                                                    ║" -ForegroundColor Cyan
     Write-Host "  ║   " -NoNewline -ForegroundColor Cyan
-    Write-Host "███╗   ███╗ █████╗ ██╗  ██╗ █████╗ " -NoNewline -ForegroundColor Yellow
-    Write-Host "  ║" -ForegroundColor Cyan
+    Write-Host "███╗   ███╗ █████╗ ██╗  ██╗ █████╗   " -NoNewline -ForegroundColor Yellow
+    Write-Host "║" -ForegroundColor Cyan
     Write-Host "  ║   " -NoNewline -ForegroundColor Cyan
-    Write-Host "████╗ ████║██╔══██╗██║ ██╔╝██╔══██╗" -NoNewline -ForegroundColor Yellow
-    Write-Host "  ║" -ForegroundColor Cyan
+    Write-Host "████╗ ████║██╔══██╗██║ ██╔╝██╔══██╗  " -NoNewline -ForegroundColor Yellow
+    Write-Host "║" -ForegroundColor Cyan
     Write-Host "  ║   " -NoNewline -ForegroundColor Cyan
-    Write-Host "██╔████╔██║███████║█████╔╝ ███████║" -NoNewline -ForegroundColor White
-    Write-Host "  ║" -ForegroundColor Cyan
+    Write-Host "██╔████╔██║███████║█████╔╝ ███████║  " -NoNewline -ForegroundColor White
+    Write-Host "║" -ForegroundColor Cyan
     Write-Host "  ║   " -NoNewline -ForegroundColor Cyan
-    Write-Host "██║╚██╔╝██║██╔══██║██╔═██╗ ██╔══██║" -NoNewline -ForegroundColor DarkGray
-    Write-Host "  ║" -ForegroundColor Cyan
+    Write-Host "██║╚██╔╝██║██╔══██║██╔═██╗ ██╔══██║  " -NoNewline -ForegroundColor DarkGray
+    Write-Host "║" -ForegroundColor Cyan
     Write-Host "  ║   " -NoNewline -ForegroundColor Cyan
-    Write-Host "██║ ╚═╝ ██║██║  ██║██║  ██╗██║  ██║" -NoNewline -ForegroundColor Magenta
-    Write-Host "  ║" -ForegroundColor Cyan
-    Write-Host "  ║                                                  ║" -ForegroundColor Cyan
+    Write-Host "██║ ╚═╝ ██║██║  ██║██║  ██╗██║  ██║  " -NoNewline -ForegroundColor Magenta
+    Write-Host "║" -ForegroundColor Cyan
+    Write-Host "  ║                                                    ║" -ForegroundColor Cyan
     Write-Host "  ║        " -NoNewline -ForegroundColor Cyan
-    Write-Host "Portfolio Manager  v5.0" -NoNewline -ForegroundColor White
-    Write-Host "                 ║" -ForegroundColor Cyan
-    Write-Host "  ╚══════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host "Portfolio Manager  v6.0" -NoNewline -ForegroundColor White
+    Write-Host "                   ║" -ForegroundColor Cyan
+    Write-Host "  ╚════════════════════════════════════════════════════╝" -ForegroundColor Cyan
 
     if ($Subtitle) {
         Write-Host ""
-        Write-BoxHeader -Title "" -Color "DarkGray" -Width 52
-        Write-BoxLine -Content $Subtitle.PadRight(46) -Color "White" -BorderColor "DarkGray" -Width 52
-        Write-BoxFooter -Color "DarkGray" -Width 52
+        Write-BoxHeader -Title "" -Color "DarkGray" -Width 54
+        Write-BoxLine -Content $Subtitle.PadRight(48) -Color "White" -BorderColor "DarkGray" -Width 54
+        Write-BoxFooter -Color "DarkGray" -Width 54
     }
 
     if ($global:lastAction) {
@@ -150,9 +143,19 @@ function Prompt-Number {
     }
 }
 
-# =============================================================================
-#  CAMADA DE DADOS & ARQUIVO
-# =============================================================================
+function Backup-Data {
+    if (Test-Path $dataFile) {
+        Copy-Item -Path $dataFile -Destination $backupFile -Force
+    }
+}
+
+function Restore-Data {
+    if (Test-Path $backupFile) {
+        Copy-Item -Path $backupFile -Destination $dataFile -Force
+        return $true
+    }
+    return $false
+}
 
 function Get-DataContent {
     if (-not (Test-Path $dataFile)) {
@@ -219,13 +222,10 @@ function Get-PortfolioStats {
     return $stats
 }
 
-# =============================================================================
-#  MODIFICADORES SEGUROS (INDEX BASED)
-# =============================================================================
-
 function Set-ItemUrl {
     param([string]$ArrayName, [int]$ItemIndex, [string]$NewUrl)
     try {
+        Backup-Data
         $content = Get-DataContent
         $pattern = "export const ${ArrayName}: PortfolioItem\[\] = \[([\s\S]*?)\];"
         $match = [regex]::Match($content, $pattern)
@@ -261,9 +261,47 @@ function Set-ItemUrl {
     }
 }
 
+function Move-ItemOrder {
+    param([string]$ArrayName, [int]$IndexA, [int]$IndexB)
+    try {
+        Backup-Data
+        $content = Get-DataContent
+        $pattern = "export const ${ArrayName}: PortfolioItem\[\] = \[([\s\S]*?)\];"
+        $match = [regex]::Match($content, $pattern)
+        if (-not $match.Success) { return $false }
+
+        $block = $match.Groups[1].Value
+        $itemMatches = [regex]::Matches($block, '\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}')
+        if ($IndexA -lt 0 -or $IndexA -ge $itemMatches.Count) { return $false }
+        if ($IndexB -lt 0 -or $IndexB -ge $itemMatches.Count) { return $false }
+
+        $valA = $itemMatches[$IndexA].Value
+        $valB = $itemMatches[$IndexB].Value
+        
+        $minIdx = [math]::Min($IndexA, $IndexB)
+        $maxIdx = [math]::Max($IndexA, $IndexB)
+        $matchMin = $itemMatches[$minIdx]
+        $matchMax = $itemMatches[$maxIdx]
+
+        $part1 = $block.Substring(0, $matchMin.Index)
+        $part2 = $block.Substring($matchMin.Index + $matchMin.Length, $matchMax.Index - ($matchMin.Index + $matchMin.Length))
+        $part3 = $block.Substring($matchMax.Index + $matchMax.Length)
+
+        $newBlock = $part1 + $matchMax.Value + $part2 + $matchMin.Value + $part3
+        $newContent = $content.Replace($block, $newBlock)
+        
+        Set-DataContent $newContent
+        return $true
+    } catch {
+        Write-Err "Erro ao reordenar: $_"
+        return $false
+    }
+}
+
 function Add-Item {
     param([string]$ArrayName, [string]$Type, [string]$MediaUrl, [bool]$Double = $false, [bool]$Vertical = $false)
     try {
+        Backup-Data
         $content = Get-DataContent
         switch ($ArrayName) {
             "artItems"   { $color = "from-amber-200 to-yellow-200"; $iconColor = "text-amber-600";  $iconJsx = "<ImageIcon className=`"w-10 h-10`" />" }
@@ -285,10 +323,10 @@ function Add-Item {
     }
 }
 
-
 function Remove-PortfolioSlot {
     param([string]$ArrayName, [int]$ItemIndex)
     try {
+        Backup-Data
         $content = Get-DataContent
         $pattern = "export const ${ArrayName}: PortfolioItem\[\] = \[([\s\S]*?)\];"
         $match = [regex]::Match($content, $pattern)
@@ -314,15 +352,11 @@ function Remove-PortfolioSlot {
     }
 }
 
-# =============================================================================
-#  DEPLOY E INTEGRAÇÃO GIT
-# =============================================================================
-
 function Deploy-Changes {
     param([string]$CommitMessage = "")
     Write-Host ""
-    Write-BoxHeader -Title "Sincronizando com GitHub..." -Color "DarkCyan"
-    Write-BoxFooter -Color "DarkCyan"
+    Write-BoxHeader -Title "Sincronizando com GitHub..." -Color "DarkCyan" -Width 54
+    Write-BoxFooter -Color "DarkCyan" -Width 54
     Write-Host ""
 
     Push-Location $PSScriptRoot
@@ -331,11 +365,11 @@ function Deploy-Changes {
 
     try {
         if (-not (Get-Command "npm" -ErrorAction SilentlyContinue)) {
-            Write-Err "NPM não encontrado no PATH. Impossível compilar."
+            Write-Err "NPM não encontrado no PATH."
             return $false
         }
         if (-not (Get-Command "git" -ErrorAction SilentlyContinue)) {
-            Write-Err "GIT não encontrado no PATH. Impossível enviar."
+            Write-Err "GIT não encontrado no PATH."
             return $false
         }
 
@@ -344,7 +378,6 @@ function Deploy-Changes {
         $buildResult = cmd /c npm run build 2>&1
         if ($LASTEXITCODE -ne 0) {
             Write-Host " FALHOU" -ForegroundColor Red
-            Write-Err "Erro rodando 'npm run build'."
             return $false
         }
         Write-Host " OK" -ForegroundColor Green
@@ -356,14 +389,12 @@ function Deploy-Changes {
         $gitStatus = & git status --porcelain 2>&1
         if ([string]::IsNullOrWhiteSpace($gitStatus)) {
             Write-Host " IGNORADO" -ForegroundColor Yellow
-            Write-Info "Nenhuma alteração detectada para commit."
         } else {
             $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
-            $msg = if ($CommitMessage) { $CommitMessage } else { "Update via Manager v5.0 — $timestamp" }
+            $msg = if ($CommitMessage) { $CommitMessage } else { "Update via Manager v6.0 — $timestamp" }
             $commitResult = & git commit -m "$msg" 2>&1
             if ($LASTEXITCODE -ne 0) {
                 Write-Host " FALHOU" -ForegroundColor Red
-                Write-Err "Falha no git commit."
                 return $false
             }
             Write-Host " OK" -ForegroundColor Green
@@ -374,20 +405,19 @@ function Deploy-Changes {
         $pushResult = & git push origin main 2>&1
         if ($LASTEXITCODE -ne 0) {
             Write-Host " FALHOU" -ForegroundColor Red
-            Write-Err "Falha ('git push origin main')."
             return $false
         }
         Write-Host " OK" -ForegroundColor Green
 
         Write-Host ""
-        Write-Host "  ╔══════════════════════════════════════════════════╗" -ForegroundColor Green
-        Write-Host "  ║  ✓  Deploy concluído com sucesso!                ║" -ForegroundColor Green
-        Write-Host "  ║                                                  ║" -ForegroundColor Green
-        Write-Host "  ║  O site atualiza em ~1-3 min:                    ║" -ForegroundColor White
-        Write-Host "  ║  $($siteUrl.PadRight(46))║" -ForegroundColor Yellow
-        Write-Host "  ║                                                  ║" -ForegroundColor Green
-        Write-Host "  ║  Dica: Ctrl+F5 no navegador para limpar cache    ║" -ForegroundColor DarkGray
-        Write-Host "  ╚══════════════════════════════════════════════════╝" -ForegroundColor Green
+        Write-Host "  ╔════════════════════════════════════════════════════╗" -ForegroundColor Green
+        Write-Host "  ║  ✓  Deploy concluído com sucesso!                  ║" -ForegroundColor Green
+        Write-Host "  ║                                                    ║" -ForegroundColor Green
+        Write-Host "  ║  O site atualiza em ~1-3 min:                      ║" -ForegroundColor White
+        Write-Host "  ║  $($siteUrl.PadRight(48))║" -ForegroundColor Yellow
+        Write-Host "  ║                                                    ║" -ForegroundColor Green
+        Write-Host "  ║  Dica: Ctrl+F5 no navegador para limpar cache      ║" -ForegroundColor DarkGray
+        Write-Host "  ╚════════════════════════════════════════════════════╝" -ForegroundColor Green
 
         return $true
     } finally {
@@ -395,10 +425,6 @@ function Deploy-Changes {
         Pop-Location
     }
 }
-
-# =============================================================================
-#  VIEWS (UI)
-# =============================================================================
 
 function View-Stats {
     $s = Get-PortfolioStats
@@ -411,7 +437,7 @@ function View-Stats {
     $hStr = $s.Horizontals.ToString().PadRight(4)
     $vtStr = $s.Verticals.ToString().PadRight(4)
     
-    Write-BoxHeader -Title "Status do Portfólio" -Color "DarkCyan"
+    Write-BoxHeader -Title "Status do Portfólio" -Color "DarkCyan" -Width 54
     
     Write-Host "  │  Total: " -NoNewline -ForegroundColor DarkCyan
     Write-Host $tStr -NoNewline -ForegroundColor White
@@ -419,7 +445,7 @@ function View-Stats {
     Write-Host $iStr -NoNewline -ForegroundColor Yellow
     Write-Host " Vídeos: " -NoNewline -ForegroundColor DarkCyan
     Write-Host $vStr -NoNewline -ForegroundColor Cyan
-    Write-Host (" " * 10 + "│") -ForegroundColor DarkCyan
+    Write-Host (" " * 12 + "│") -ForegroundColor DarkCyan
 
     Write-Host "  │  Quad: " -NoNewline -ForegroundColor DarkCyan
     Write-Host $qStr -NoNewline -ForegroundColor Gray
@@ -427,22 +453,21 @@ function View-Stats {
     Write-Host $hStr -NoNewline -ForegroundColor Cyan
     Write-Host " Vert: " -NoNewline -ForegroundColor DarkCyan
     Write-Host $vtStr -NoNewline -ForegroundColor Magenta
-    Write-Host (" " * 14 + "│") -ForegroundColor DarkCyan
+    Write-Host (" " * 16 + "│") -ForegroundColor DarkCyan
 
-    $wStr = $s.WithUrl.ToString().PadRight(4)
-    $eStr = $s.Empty.ToString().PadRight(4)
-    $fStr = "$filled%".PadRight(4)
-    
-    Write-Host "  │  Com URL: " -NoNewline -ForegroundColor DarkCyan
-    Write-Host $wStr -NoNewline -ForegroundColor Green
-    Write-Host " Vazios:  " -NoNewline -ForegroundColor DarkCyan
-    Write-Host $eStr -NoNewline -ForegroundColor DarkGray
-    Write-Host " Preench: " -NoNewline -ForegroundColor DarkCyan
+    # Barra de Progresso
+    $barLen = 20
+    $filledLen = [math]::Round(($filled / 100) * $barLen)
+    $emptyLen = $barLen - $filledLen
+    if ($emptyLen -lt 0) { $emptyLen = 0 }
+    $barStr = ("█" * $filledLen) + ("░" * $emptyLen)
+
+    Write-Host "  │  Preench: " -NoNewline -ForegroundColor DarkCyan
     $colorFilled = if ($filled -ge 70) { "Green" } elseif ($filled -ge 40) { "Yellow" } else { "Red" }
-    Write-Host $fStr -NoNewline -ForegroundColor $colorFilled
-    Write-Host (" " * 7 + "│") -ForegroundColor DarkCyan
+    Write-Host "[$barStr] $filled%".PadRight(30) -NoNewline -ForegroundColor $colorFilled
+    Write-Host (" " * 8 + "│") -ForegroundColor DarkCyan
     
-    Write-BoxFooter -Color "DarkCyan"
+    Write-BoxFooter -Color "DarkCyan" -Width 54
     Write-Host ""
 }
 
@@ -450,10 +475,10 @@ function View-Items {
     param([string]$ArrayName, [string]$Label, [string]$LabelColor = "Magenta")
     $items = Parse-PortfolioItems $ArrayName
     
-    Write-BoxHeader -Title $Label -Color $LabelColor
+    Write-BoxHeader -Title $Label -Color $LabelColor -Width 54
 
     if ($items.Count -eq 0) {
-        Write-BoxLine -Content "(galeria vazia)".PadRight(46) -Color "DarkGray" -BorderColor $LabelColor
+        Write-BoxLine -Content "(galeria vazia)".PadRight(48) -Color "DarkGray" -BorderColor $LabelColor -Width 54
     } else {
         foreach ($item in $items) {
             $num = "[$($item.Index + 1)]".PadRight(4)
@@ -472,7 +497,7 @@ function View-Items {
             Write-Host "$num" -NoNewline -ForegroundColor Cyan
             Write-Host " $formatTag " -NoNewline -ForegroundColor $tagColor
             
-            $urlSpace = 30
+            $urlSpace = 32
             if ($item.MediaUrl) {
                 $url = $item.MediaUrl
                 if ($url.Length -gt $urlSpace) { $url = $url.Substring(0, $urlSpace-3) + "..." }
@@ -483,7 +508,7 @@ function View-Items {
             }
         }
     }
-    Write-BoxFooter -Color $LabelColor
+    Write-BoxFooter -Color $LabelColor -Width 54
     Write-Host ""
 }
 
@@ -491,7 +516,7 @@ function Show-WipePreview {
     param([string]$TargetType, [string]$WipeMode)
     $total = 0
     Write-Host "  Itens que serão afetados:" -ForegroundColor Yellow
-    Write-Host "  ─────────────────────────────────────────────────" -ForegroundColor DarkGray
+    Write-Host "  ───────────────────────────────────────────────────" -ForegroundColor DarkGray
     foreach ($cat in $global:arrays.Values | Sort-Object Name) {
         $items = Parse-PortfolioItems $cat.Name
         $affected = $items | Where-Object { $_.Type -eq $TargetType }
@@ -504,7 +529,7 @@ function Show-WipePreview {
             $total++
         }
     }
-    Write-Host "  ─────────────────────────────────────────────────" -ForegroundColor DarkGray
+    Write-Host "  ───────────────────────────────────────────────────" -ForegroundColor DarkGray
     return $total
 }
 
@@ -523,9 +548,9 @@ function Exec-Wipe {
     $mode = if ($wipeMode -eq "1") { "url" } else { "slot" }
     $modeLabel = if ($mode -eq "url") { "Zerar URLs" } else { "Deletar Slots" }
 
-    Write-Host "`n`n  ╔══════════════════════════════════════════════════╗" -ForegroundColor Red
-    Write-Host "  ║  ⚠  ATENÇÃO: Ação irreversível!                  ║" -ForegroundColor Red
-    Write-Host "  ╚══════════════════════════════════════════════════╝`n" -ForegroundColor Red
+    Write-Host "`n`n  ╔════════════════════════════════════════════════════╗" -ForegroundColor Red
+    Write-Host "  ║  ⚠  ATENÇÃO: Ação irreversível!                    ║" -ForegroundColor Red
+    Write-Host "  ╚════════════════════════════════════════════════════╝`n" -ForegroundColor Red
     
     $total = Show-WipePreview -TargetType $TargetType -WipeMode $mode
 
@@ -569,7 +594,7 @@ function Exec-Wipe {
     }
 
     Write-OK "$count item(s) limpos com sucesso."
-    $result = Deploy-Changes -CommitMessage "Wipe $TypeLabel ($modeLabel) via Manager v5.0"
+    $result = Deploy-Changes -CommitMessage "Wipe $TypeLabel ($modeLabel) via Manager v6.0"
     if ($result) { $global:lastAction = "Wipe de $TypeLabel ($modeLabel) — $count itens" }
     Pause-Screen
 }
@@ -588,31 +613,36 @@ function Select-Category {
     return $global:arrays[$choice]
 }
 
-# =============================================================================
-#  LOOP PRINCIPAL (MAIN)
-# =============================================================================
-
 while ($true) {
     Write-Header
     View-Stats
 
-    Write-BoxHeader -Title "Menu Principal" -Color "DarkGray"
-    Write-Host "  │                                                  │" -ForegroundColor DarkGray
-    Write-Host "  │  [1] " -NoNewline -ForegroundColor DarkGray; Write-Host "Visão Geral        " -NoNewline -ForegroundColor White; Write-Host "Ver todas as mídias        │" -ForegroundColor DarkGray
-    Write-Host "  │  [2] " -NoNewline -ForegroundColor DarkGray; Write-Host "Trocar URL         " -NoNewline -ForegroundColor Yellow; Write-Host "Atualizar link de mídia    │" -ForegroundColor DarkGray
-    Write-Host "  │  [3] " -NoNewline -ForegroundColor DarkGray; Write-Host "Adicionar Mídia    " -NoNewline -ForegroundColor Green; Write-Host "Novo slot no site          │" -ForegroundColor DarkGray
-    Write-Host "  │  [4] " -NoNewline -ForegroundColor DarkGray; Write-Host "Remover Slot       " -NoNewline -ForegroundColor Red; Write-Host "Apagar um card             │" -ForegroundColor DarkGray
-    Write-Host "  │  [5] " -NoNewline -ForegroundColor DarkGray; Write-Host "Deploy             " -NoNewline -ForegroundColor Cyan; Write-Host "Sincronizar com GitHub     │" -ForegroundColor DarkGray
-    Write-Host "  │                                                  │" -ForegroundColor DarkGray
-    Write-Host "  │  [6] " -NoNewline -ForegroundColor DarkGray; Write-Host "WIPE Imagens       " -NoNewline -ForegroundColor DarkYellow; Write-Host "Limpar mídias IMG          │" -ForegroundColor DarkGray
-    Write-Host "  │  [7] " -NoNewline -ForegroundColor DarkGray; Write-Host "WIPE Vídeos        " -NoNewline -ForegroundColor DarkCyan; Write-Host "Limpar mídias VID          │" -ForegroundColor DarkGray
-    Write-Host "  │                                                  │" -ForegroundColor DarkGray
-    Write-Host "  │  [8] " -NoNewline -ForegroundColor DarkGray; Write-Host "Configurações      " -NoNewline -ForegroundColor Blue; Write-Host "Taxa de câmbio USD/BRL     │" -ForegroundColor DarkGray
-    Write-Host "  │  [0] " -NoNewline -ForegroundColor DarkGray; Write-Host "Sair               " -NoNewline -ForegroundColor DarkGray; Write-Host "                           │" -ForegroundColor DarkGray
-    Write-Host "  │                                                  │" -ForegroundColor DarkGray
-    Write-BoxFooter -Color "DarkGray"
+    Write-BoxHeader -Title "Menu Principal" -Color "DarkGray" -Width 54
+    Write-Host "  │                                                    │" -ForegroundColor DarkGray
+    Write-Host "  │  [1] " -NoNewline -ForegroundColor DarkGray; Write-Host "Visão Geral      " -NoNewline -ForegroundColor White; Write-Host "Ver todas as mídias          │" -ForegroundColor DarkGray
+    Write-Host "  │  [2] " -NoNewline -ForegroundColor DarkGray; Write-Host "Trocar URL       " -NoNewline -ForegroundColor Yellow; Write-Host "Atualizar link de mídia      │" -ForegroundColor DarkGray
+    Write-Host "  │  [3] " -NoNewline -ForegroundColor DarkGray; Write-Host "Adicionar Mídia  " -NoNewline -ForegroundColor Green; Write-Host "Novo slot no site            │" -ForegroundColor DarkGray
+    Write-Host "  │  [4] " -NoNewline -ForegroundColor DarkGray; Write-Host "Remover Slot     " -NoNewline -ForegroundColor Red; Write-Host "Apagar um card               │" -ForegroundColor DarkGray
+    Write-Host "  │  [5] " -NoNewline -ForegroundColor DarkGray; Write-Host "Reordenar Mídias " -NoNewline -ForegroundColor Cyan; Write-Host "Mover itens na galeria       │" -ForegroundColor DarkGray
+    Write-Host "  │                                                    │" -ForegroundColor DarkGray
+    Write-Host "  │  [P] " -NoNewline -ForegroundColor DarkGray; Write-Host "Preview Local    " -NoNewline -ForegroundColor Magenta; Write-Host "Testar site (localhost)      │" -ForegroundColor DarkGray
+    Write-Host "  │  [D] " -NoNewline -ForegroundColor DarkGray; Write-Host "Deploy Automático" -NoNewline -ForegroundColor Green; Write-Host "Sincronizar com GitHub       │" -ForegroundColor DarkGray
+    Write-Host "  │                                                    │" -ForegroundColor DarkGray
+    Write-Host "  │  [W] " -NoNewline -ForegroundColor DarkGray; Write-Host "WIPE em Lote     " -NoNewline -ForegroundColor DarkYellow; Write-Host "Limpar Imagens/Vídeos        │" -ForegroundColor DarkGray
+    Write-Host "  │  [C] " -NoNewline -ForegroundColor DarkGray; Write-Host "Configurações    " -NoNewline -ForegroundColor Blue; Write-Host "Editar variáveis do site     │" -ForegroundColor DarkGray
+    Write-Host "  │                                                    │" -ForegroundColor DarkGray
+    
+    if (Test-Path $backupFile) {
+        Write-Host "  │  [U] " -NoNewline -ForegroundColor DarkGray; Write-Host "Desfazer (Undo)  " -NoNewline -ForegroundColor DarkRed; Write-Host "Restaurar backup anterior    │" -ForegroundColor DarkGray
+    } else {
+        Write-Host "  │                                                    │" -ForegroundColor DarkGray
+    }
+    
+    Write-Host "  │  [0] " -NoNewline -ForegroundColor DarkGray; Write-Host "Sair             " -NoNewline -ForegroundColor DarkGray; Write-Host "                             │" -ForegroundColor DarkGray
+    Write-Host "  │                                                    │" -ForegroundColor DarkGray
+    Write-BoxFooter -Color "DarkGray" -Width 54
 
-    $option = Prompt-ChoiceKey "`n  Opção:" @("1","2","3","4","5","6","7","8","0")
+    $option = Prompt-ChoiceKey "`n  Opção:" @("1","2","3","4","5","P","D","W","C","U","0")
 
     switch ($option) {
         "1" {
@@ -649,11 +679,7 @@ while ($true) {
 
             if (Set-ItemUrl -ArrayName $cat.Name -ItemIndex $idx -NewUrl $newUrl) {
                 Write-OK "Mídia atualizada localmente."
-                $result = Deploy-Changes
-                if ($result) {
-                    $labelStr = if ($newUrl) { "definida" } else { "removida" }
-                    $global:lastAction = "URL do item $($idx+1) ($($cat.Label)) $labelStr"
-                }
+                $global:lastAction = "URL do item $($idx+1) alterada"
             }
             Pause-Screen
         }
@@ -672,18 +698,27 @@ while ($true) {
             Write-Host "`n  " -NoNewline
             $url = Read-Host "URL da mídia (vazio = card em branco)"
 
-            # Auto-detect TikTok → forçar modo vertical
             $isDouble   = $false
             $isVertical = $false
+
+            # URL Smart Detection
             if ($url -match "tiktok\.com") {
-                Write-Host "`n  " -NoNewline
-                Write-Host "TikTok detectado! " -NoNewline -ForegroundColor Magenta
-                Write-Host "Aplicando layout vertical automaticamente." -ForegroundColor DarkGray
+                Write-Host "`n  TikTok detectado! Formatando layout vertical." -ForegroundColor Magenta
                 $isVertical = $true
-            } else {
-                Write-Host "`n  [H] Slot duplo (Card Horizontal/Panorâmico)" -ForegroundColor DarkGray
-                Write-Host "  [V] Slot vertical (Card 9:16 — TikTok)" -ForegroundColor Magenta
-                Write-Host "  [N] Slot normal (Card Quadrado 4x4)" -ForegroundColor DarkGray
+                if ($url -notmatch "autoplay=1") {
+                    if ($url -match "\?") { $url += "&autoplay=1&mute=1" } else { $url += "?autoplay=1&mute=1" }
+                }
+            } elseif ($url -match "youtube\.com|youtu\.be") {
+                Write-Host "`n  YouTube detectado! Forçando HQ 720p." -ForegroundColor Red
+                if ($url -notmatch "vq=hd720") {
+                    if ($url -match "\?") { $url += "&vq=hd720" } else { $url += "?vq=hd720" }
+                }
+            }
+
+            if (-not $isVertical) {
+                Write-Host "`n  [H] Slot duplo (Horizontal)" -ForegroundColor DarkGray
+                Write-Host "  [V] Slot vertical (9:16)" -ForegroundColor Magenta
+                Write-Host "  [N] Slot normal (Quadrado)" -ForegroundColor DarkGray
                 $fmtChoice = Prompt-ChoiceKey "`n  Formato [H/V/N]:" @("H","V","N")
                 $isDouble   = ($fmtChoice -eq "H")
                 $isVertical = ($fmtChoice -eq "V")
@@ -691,8 +726,7 @@ while ($true) {
 
             if (Add-Item -ArrayName $cat.Name -Type $type -MediaUrl $url -Double $isDouble -Vertical $isVertical) {
                 Write-OK "`nMídia adicionada localmente."
-                $result = Deploy-Changes
-                if ($result) { $global:lastAction = "Nova mídia adicionada à galeria $($cat.Label)" }
+                $global:lastAction = "Nova mídia adicionada à galeria $($cat.Label)"
             }
             Pause-Screen
         }
@@ -715,8 +749,7 @@ while ($true) {
             if ($confirm -eq "S") {
                 if (Remove-PortfolioSlot -ArrayName $cat.Name -ItemIndex $idx) {
                     Write-OK "`nSlot removido localmente."
-                    $result = Deploy-Changes
-                    if ($result) { $global:lastAction = "Slot $($idx+1) removido da galeria $($cat.Label)" }
+                    $global:lastAction = "Slot $($idx+1) removido da galeria $($cat.Label)"
                 }
             } else {
                 Write-Warn "`nCancelado."
@@ -725,16 +758,68 @@ while ($true) {
         }
 
         "5" {
-            Write-Header "Deploy Manual"
-            $result = Deploy-Changes
-            if ($result) { $global:lastAction = "Deploy manual" }
+            Write-Header "Reordenar Mídias"
+            $cat = Select-Category
+            if ($null -eq $cat) { continue }
+
+            Write-Header "Reordenar — $($cat.Label)"
+            View-Items -ArrayName $cat.Name -Label $cat.Label -LabelColor $cat.Color
+
+            $items = Parse-PortfolioItems $cat.Name
+            if ($items.Count -lt 2) { Write-Warn "Galeria precisa de no mínimo 2 itens."; Pause-Screen; continue }
+
+            $idx1 = (Prompt-Number "Número do item que deseja mover (0 = cancelar)" 0 $items.Count) - 1
+            if ($idx1 -lt 0) { continue }
+
+            $idx2 = (Prompt-Number "Para qual posição você quer movê-lo?" 1 $items.Count) - 1
+
+            if ($idx1 -eq $idx2) { Write-Warn "Posições iguais. Nenhuma mudança feita."; Pause-Screen; continue }
+
+            if (Move-ItemOrder -ArrayName $cat.Name -IndexA $idx1 -IndexB $idx2) {
+                Write-OK "Mídias reordenadas."
+                $global:lastAction = "Item movido para a posição $($idx2+1) na galeria $($cat.Label)"
+            }
             Pause-Screen
         }
 
-        "6" { Exec-Wipe -TargetType "image" -TypeLabel "Imagens" }
-        "7" { Exec-Wipe -TargetType "video" -TypeLabel "Vídeos" }
+        "P" {
+            Write-Header "Preview Local (Modo Live)"
+            Write-Host "  Iniciando servidor de desenvolvimento local..." -ForegroundColor Cyan
+            Write-Info "  Isso abrirá uma janela do navegador."
+            Write-Info "  Você pode voltar para este terminal a qualquer momento."
+            Write-Host ""
+            
+            try {
+                Start-Process "powershell" -ArgumentList "-Command `"cd '$PSScriptRoot'; npm run dev`"" -WindowStyle Minimized
+                Start-Sleep -Seconds 2
+                Start-Process "http://localhost:5173"
+                Write-OK "Servidor iniciado! Confira o navegador."
+                $global:lastAction = "Servidor Preview iniciado"
+            } catch {
+                Write-Err "Erro ao iniciar o servidor: $_"
+            }
+            Pause-Screen
+        }
 
-        "8" {
+        "D" {
+            Write-Header "Deploy Manual"
+            $result = Deploy-Changes
+            if ($result) { $global:lastAction = "Deploy manual executado" }
+            Pause-Screen
+        }
+
+        "W" {
+            Write-Header "Limpeza Geral (WIPE)"
+            Write-Host "  Qual tipo de mídia deseja limpar?" -ForegroundColor White
+            Write-Host "  [1] Imagens" -ForegroundColor Yellow
+            Write-Host "  [2] Vídeos" -ForegroundColor Cyan
+            Write-Host "  [0] Cancelar" -ForegroundColor DarkGray
+            $wipeChoice = Prompt-ChoiceKey "`n  Opção:" @("1","2","0")
+            if ($wipeChoice -eq "1") { Exec-Wipe -TargetType "image" -TypeLabel "Imagens" }
+            elseif ($wipeChoice -eq "2") { Exec-Wipe -TargetType "video" -TypeLabel "Vídeos" }
+        }
+
+        "C" {
             Write-Header "Configurações do Site"
             try {
                 $content = Get-DataContent
@@ -744,19 +829,62 @@ while ($true) {
                     $currentRate = $rateMatch.Groups[1].Value
                     Write-Host "  Taxa de câmbio atual (USD → BRL): " -NoNewline -ForegroundColor White
                     Write-Host "R$ $currentRate" -ForegroundColor Green
-                    Write-Host "`n  " -NoNewline
-                    $newRate = Read-Host "Nova taxa (ex: 5.80) ou ENTER para cancelar"
 
-                    if (-not [string]::IsNullOrWhiteSpace($newRate)) {
-                        $newRate = $newRate.Replace(",", ".")
-                        if ($newRate -match "^[\d\.]+$") {
-                            $newContent = $content -replace "export const exchangeRate = [\d\.]+;", "export const exchangeRate = $newRate;"
+                    Write-Host "`n  Como deseja atualizar a taxa?" -ForegroundColor White
+                    Write-Host "  [1] Auto-Update via API (Cotação USD Real + Taxa PayPal)" -ForegroundColor Cyan
+                    Write-Host "  [2] Digitar Manualmente" -ForegroundColor Yellow
+                    Write-Host "  [0] Cancelar" -ForegroundColor DarkGray
+                    $cChoice = Prompt-ChoiceKey "`n  Opção:" @("1","2","0")
+
+                    if ($cChoice -eq "0") { continue }
+
+                    $finalRate = ""
+
+                    if ($cChoice -eq "1") {
+                        Write-Host "`n  Buscando cotação em open.er-api.com..." -ForegroundColor DarkGray
+                        try {
+                            $resp = Invoke-RestMethod -Uri "https://open.er-api.com/v6/latest/USD" -Method Get
+                            $usdToBrl = $resp.rates.BRL
+                            if ($null -eq $usdToBrl) { throw "API não retornou a cotação." }
+                            Write-Host "  Cotação Comercial atual: " -NoNewline; Write-Host "R$ $usdToBrl" -ForegroundColor Green
+                            
+                            Write-Host "  " -NoNewline
+                            $feeInput = Read-Host "Taxa do PayPal em % (Padrão: 4.5)"
+                            if ([string]::IsNullOrWhiteSpace($feeInput)) { $feeInput = "4.5" }
+                            $feeInput = $feeInput.Replace(",", ".")
+                            
+                            if ($feeInput -match "^[\d\.]+$") {
+                                $feePerc = [double]$feeInput
+                                $finalDouble = $usdToBrl * (1 - ($feePerc / 100))
+                                $finalRate = [math]::Round($finalDouble, 2).ToString("0.00").Replace(",", ".")
+                                Write-Host "  " -NoNewline; Write-Host "Cotação com desconto PayPal aplicado: " -NoNewline; Write-Host "R$ $finalRate" -ForegroundColor Magenta
+                            } else {
+                                Write-Err "Porcentagem inválida."
+                            }
+                        } catch {
+                            Write-Err "Falha na API de cotação: $_"
+                        }
+                    } elseif ($cChoice -eq "2") {
+                        Write-Host "`n  " -NoNewline
+                        $manRate = Read-Host "Nova taxa (ex: 5.80)"
+                        if (-not [string]::IsNullOrWhiteSpace($manRate)) {
+                            $manRate = $manRate.Replace(",", ".")
+                            if ($manRate -match "^[\d\.]+$") { $finalRate = $manRate }
+                            else { Write-Err "Valor inválido." }
+                        }
+                    }
+
+                    if (-not [string]::IsNullOrWhiteSpace($finalRate)) {
+                        Write-Host "`n  Salvar R$ $finalRate? [S/N] " -NoNewline -ForegroundColor White
+                        $saveConf = Prompt-ChoiceKey "" @("S", "N", "ENTER")
+                        if ($saveConf -eq "S") {
+                            Backup-Data
+                            $newContent = $content -replace "export const exchangeRate = [\d\.]+;", "export const exchangeRate = $finalRate;"
                             Set-DataContent $newContent
-                            Write-OK "Taxa atualizada localmente para R$ $newRate."
-                            $result = Deploy-Changes -CommitMessage "Update exchangeRate to $newRate via Manager v5.0"
-                            if ($result) { $global:lastAction = "Taxa de câmbio atualizada → R$ $newRate" }
+                            Write-OK "`nTaxa atualizada localmente para R$ $finalRate."
+                            $global:lastAction = "Taxa de câmbio atualizada → R$ $finalRate"
                         } else {
-                            Write-Err "Valor inválido. Use apenas números e ponto (ex: 5.50)."
+                            Write-Warn "`nCancelado."
                         }
                     }
                 } else {
@@ -768,13 +896,28 @@ while ($true) {
             Pause-Screen
         }
 
+        "U" {
+            if (-not (Test-Path $backupFile)) { continue }
+            Write-Header "Desfazer Última Ação"
+            Write-Warn "Isso vai restaurar o arquivo data.tsx para o estado anterior à sua última modificação."
+            $confirm = Prompt-ChoiceKey "`n  Tem certeza? [S/N]:" @("S","N")
+            if ($confirm -eq "S") {
+                if (Restore-Data) {
+                    Write-OK "Restauração concluída! O estado anterior foi recuperado."
+                    $global:lastAction = "Backup Restaurado (Undo)"
+                    Remove-Item $backupFile -Force
+                } else {
+                    Write-Err "Falha ao restaurar."
+                }
+            } else {
+                Write-Warn "Cancelado."
+            }
+            Pause-Screen
+        }
+
         "0" {
             Write-Host "`n  Até a próxima, Maka! ✨`n" -ForegroundColor Magenta
             break
         }
     }
 }
-
-
-
-
