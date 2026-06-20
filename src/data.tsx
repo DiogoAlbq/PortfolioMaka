@@ -1,4 +1,4 @@
-﻿import { Palette, Video, Image as ImageIcon } from 'lucide-react';
+import { Palette, Video, Image as ImageIcon } from 'lucide-react';
 import React from 'react';
 
 export const exchangeRate = 5.75;
@@ -7,7 +7,7 @@ export const t = {
     EN: {
         nav: { home: "Home", portfolio: "Portfolio", services: "Services", terms: "Terms", contact: "Contact", order: "Book Now" },
         hero: { status: "Commissions Open", title1: "Artist | Fan Dubber |", title2: "Editor | Pixel Artist", desc: "Simple and goofy cartoons", btn1: "See Services", btn2: "Explore Portfolio" },
-        portfolio: { title: "Recent Projects", desc: "A selection of my best digital art and video editing projects.", typeImage: "Illustration", typeVideo: "Video Edit", tabs: [{id: 'all', label: 'All'}, {id: 'video', label: 'Video'}, {id: 'nsfw', label: 'NSFW (18+)'}] },
+        portfolio: { title: "Recent Projects", desc: "A selection of my best digital art and video editing projects.", typeImage: "Illustration", typeVideo: "Video Edit", tabs: [{id: 'all', label: 'All'}, {id: 'art', label: 'Arts'}, {id: 'video', label: 'Video'}, {id: 'nsfw', label: 'NSFW (18+)'}] },
         pricing: { title: "Investment", desc: "Base values for projects. Final price may vary depending on project complexity. Contact me for custom quotes.", tabs: [{id: 'digital', label: 'Digital Art'}, {id: 'special', label: 'Other Services'}], popular: "Most Popular", addons: "Add-ons", select: "Select" },
         pricingPlans: {
             digital: [
@@ -109,7 +109,7 @@ export const t = {
     PT: {
         nav: { home: "Início", portfolio: "Portfólio", services: "Serviços", terms: "Termos", contact: "Contato", order: "Encomendar Agora" },
         hero: { status: "Comissões Abertas", title1: "Artist | Fan Dubber |", title2: "Editor | Pixel Artist", desc: "Cartoon simples e bobo", btn1: "Ver Serviços e Preços", btn2: "Explorar Portfólio" },
-        portfolio: { title: "Trabalhos Recentes", desc: "Uma seleção das minhas melhores artes digitais e vídeos recentes.", typeImage: "Ilustração", typeVideo: "Edição de Vídeo", tabs: [{id: 'all', label: 'Todos'}, {id: 'video', label: 'Vídeos'}, {id: 'nsfw', label: 'NSFW (18+)'}] },
+        portfolio: { title: "Trabalhos Recentes", desc: "Uma seleção das minhas melhores artes digitais e vídeos recentes.", typeImage: "Ilustração", typeVideo: "Edição de Vídeo", tabs: [{id: 'all', label: 'Todos'}, {id: 'art', label: 'Artes'}, {id: 'video', label: 'Vídeos'}, {id: 'nsfw', label: 'NSFW (18+)'}] },
         pricing: { title: "Investimento", desc: "Valores base para projetos. O preço final pode variar dependendo da complexidade do pedido. Entre em contato para orçamentos personalizados.", tabs: [{id: 'digital', label: 'Arte Digital'}, {id: 'special', label: 'Serviços Especiais'}], popular: "Mais Popular", addons: "Adicionais", select: "Selecionar" },
         pricingPlans: {
             digital: [

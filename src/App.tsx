@@ -45,7 +45,7 @@ interface Plan {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'digital' | 'special'>('digital');
-  const [activePortfolioTab, setActivePortfolioTab] = useState<'all' | 'video' | 'nsfw'>('all');
+  const [activePortfolioTab, setActivePortfolioTab] = useState<'all' | 'art' | 'video' | 'nsfw'>('all');
   
   const [currency, setCurrency] = useState<'BRL' | 'USD'>(() => {
     const saved = localStorage.getItem('maka_currency');
@@ -202,7 +202,7 @@ export default function App() {
         setNsfwTargetUrl('tab');
         setNsfwDialogOpen(true);
     } else {
-        setActivePortfolioTab(tabId as 'all' | 'video' | 'nsfw');
+        setActivePortfolioTab(tabId as 'all' | 'art' | 'video' | 'nsfw');
     }
   };
 
