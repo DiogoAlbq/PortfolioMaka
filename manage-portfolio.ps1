@@ -185,15 +185,17 @@ function Parse-PortfolioItems {
         if ($itemText -match "type:\s*'([^']+)'")     { $type     = $Matches[1] }
         if ($itemText -match "color:\s*'([^']+)'")    { $color    = $Matches[1] }
         if ($itemText -match "mediaUrl:\s*'([^']+)'") { $mediaUrl = $Matches[1] }
-        $hasDouble = $itemText -match "double:\s*true"
+        $hasDouble    = $itemText -match "double:\s*true"
+        $hasVertical  = $itemText -match "vertical:\s*true"
 
         $items += [PSCustomObject]@{
-            Index    = $index
-            Type     = $type
-            Color    = $color
-            MediaUrl = $mediaUrl
-            Double   = $hasDouble
-            Raw      = $m.Value
+            Index     = $index
+            Type      = $type
+            Color     = $color
+            MediaUrl  = $mediaUrl
+            Double    = $hasDouble
+            Vertical  = $hasVertical
+            Raw       = $m.Value
             ArrayName = $ArrayName
         }
         $index++
@@ -202,13 +204,15 @@ function Parse-PortfolioItems {
 }
 
 function Get-PortfolioStats {
-    $stats = @{ TotalItems = 0; WithUrl = 0; Empty = 0; Images = 0; Videos = 0; Squares = 0; Horizontals = 0 }
+    $stats = @{ TotalItems = 0; WithUrl = 0; Empty = 0; Images = 0; Videos = 0; Squares = 0; Horizontals = 0; Verticals = 0 }
     foreach ($cat in $global:arrays.Values) {
         $items = Parse-PortfolioItems $cat.Name
         foreach ($item in $items) {
             $stats.TotalItems++
             if ($item.Type -eq "image") { $stats.Images++ } else { $stats.Videos++ }
-            if ($item.Double) { $stats.Horizontals++ } else { $stats.Squares++ }
+            if ($item.Vertical)       { $stats.Verticals++ }
+            elseif ($item.Double)     { $stats.Horizontals++ }
+            else                      { $stats.Squares++ }
             if ($item.MediaUrl) { $stats.WithUrl++ } else { $stats.Empty++ }
         }
     }
@@ -258,7 +262,7 @@ function Set-ItemUrl {
 }
 
 function Add-Item {
-    param([string]$ArrayName, [string]$Type, [string]$MediaUrl, [bool]$Double = $false)
+    param([string]$ArrayName, [string]$Type, [string]$MediaUrl, [bool]$Double = $false, [bool]$Vertical = $false)
     try {
         $content = Get-DataContent
         switch ($ArrayName) {
@@ -266,12 +270,12 @@ function Add-Item {
             "videoItems" { $color = "from-orange-200 to-yellow-200"; $iconColor = "text-orange-600"; $iconJsx = "<Video className=`"w-10 h-10`" />" }
             "nsfwItems"  { $color = "from-red-200 to-rose-200";    $iconColor = "text-red-600";    $iconJsx = "<ImageIcon className=`"w-10 h-10`" />" }
         }
-        $doubleStr = if ($Double) { ", double: true" } else { "" }
-        $mediaStr  = if ($MediaUrl) { ", mediaUrl: '$MediaUrl'" } else { "" }
+        $doubleStr   = if ($Double)   { ", double: true" }   else { "" }
+        $verticalStr = if ($Vertical) { ", vertical: true" } else { "" }
+        $mediaStr    = if ($MediaUrl) { ", mediaUrl: '$MediaUrl'" } else { "" }
         
-        $newEntry  = "  { type: '$Type', color: '$color', iconColor: '$iconColor', icon: $iconJsx$doubleStr$mediaStr },"
+        $newEntry  = "  { type: '$Type', color: '$color', iconColor: '$iconColor', icon: $iconJsx$doubleStr$verticalStr$mediaStr },"
         $newEntryEscaped = $newEntry.Replace('$', '$$')
-        
         $newContent = $content -replace "(export const ${ArrayName}: PortfolioItem\[\] = \[[\s\S]*?)(];)", "`$1`n$newEntryEscaped`n`$2"
         Set-DataContent $newContent
         return $true
@@ -280,6 +284,7 @@ function Add-Item {
         return $false
     }
 }
+
 
 function Remove-PortfolioSlot {
     param([string]$ArrayName, [int]$ItemIndex)
@@ -404,6 +409,7 @@ function View-Stats {
     $vStr = $s.Videos.ToString().PadRight(4)
     $qStr = $s.Squares.ToString().PadRight(4)
     $hStr = $s.Horizontals.ToString().PadRight(4)
+    $vtStr = $s.Verticals.ToString().PadRight(4)
     
     Write-BoxHeader -Title "Status do Portfólio" -Color "DarkCyan"
     
@@ -415,11 +421,13 @@ function View-Stats {
     Write-Host $vStr -NoNewline -ForegroundColor Cyan
     Write-Host (" " * 10 + "│") -ForegroundColor DarkCyan
 
-    Write-Host "  │  Quadrados: " -NoNewline -ForegroundColor DarkCyan
+    Write-Host "  │  Quad: " -NoNewline -ForegroundColor DarkCyan
     Write-Host $qStr -NoNewline -ForegroundColor Gray
-    Write-Host " Horizontais: " -NoNewline -ForegroundColor DarkCyan
+    Write-Host " Horiz: " -NoNewline -ForegroundColor DarkCyan
     Write-Host $hStr -NoNewline -ForegroundColor Cyan
-    Write-Host (" " * 15 + "│") -ForegroundColor DarkCyan
+    Write-Host " Vert: " -NoNewline -ForegroundColor DarkCyan
+    Write-Host $vtStr -NoNewline -ForegroundColor Magenta
+    Write-Host (" " * 14 + "│") -ForegroundColor DarkCyan
 
     $wStr = $s.WithUrl.ToString().PadRight(4)
     $eStr = $s.Empty.ToString().PadRight(4)
@@ -449,7 +457,10 @@ function View-Items {
     } else {
         foreach ($item in $items) {
             $num = "[$($item.Index + 1)]".PadRight(4)
-            if ($item.Double) {
+            if ($item.Vertical) {
+                $formatTag = "[VERTICAL]  "
+                $tagColor = "Magenta"
+            } elseif ($item.Double) {
                 $formatTag = "[HORIZONTAL]"
                 $tagColor = "Cyan"
             } else {
@@ -661,12 +672,24 @@ while ($true) {
             Write-Host "`n  " -NoNewline
             $url = Read-Host "URL da mídia (vazio = card em branco)"
 
-            Write-Host "`n  [H] Slot duplo (Card Horizontal/Panorâmico)" -ForegroundColor DarkGray
-            Write-Host "  [N] Slot normal (Card Quadrado 4x4)" -ForegroundColor DarkGray
-            $doubleChoice = Prompt-ChoiceKey "`n  Formato [H/N]:" @("H","N")
-            $isDouble = ($doubleChoice -eq "H")
+            # Auto-detect TikTok → forçar modo vertical
+            $isDouble   = $false
+            $isVertical = $false
+            if ($url -match "tiktok\.com") {
+                Write-Host "`n  " -NoNewline
+                Write-Host "TikTok detectado! " -NoNewline -ForegroundColor Magenta
+                Write-Host "Aplicando layout vertical automaticamente." -ForegroundColor DarkGray
+                $isVertical = $true
+            } else {
+                Write-Host "`n  [H] Slot duplo (Card Horizontal/Panorâmico)" -ForegroundColor DarkGray
+                Write-Host "  [V] Slot vertical (Card 9:16 — TikTok)" -ForegroundColor Magenta
+                Write-Host "  [N] Slot normal (Card Quadrado 4x4)" -ForegroundColor DarkGray
+                $fmtChoice = Prompt-ChoiceKey "`n  Formato [H/V/N]:" @("H","V","N")
+                $isDouble   = ($fmtChoice -eq "H")
+                $isVertical = ($fmtChoice -eq "V")
+            }
 
-            if (Add-Item -ArrayName $cat.Name -Type $type -MediaUrl $url -Double $isDouble) {
+            if (Add-Item -ArrayName $cat.Name -Type $type -MediaUrl $url -Double $isDouble -Vertical $isVertical) {
                 Write-OK "`nMídia adicionada localmente."
                 $result = Deploy-Changes
                 if ($result) { $global:lastAction = "Nova mídia adicionada à galeria $($cat.Label)" }
@@ -751,6 +774,7 @@ while ($true) {
         }
     }
 }
+
 
 
 

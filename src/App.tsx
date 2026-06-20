@@ -527,8 +527,8 @@ export default function App() {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.1 }}
-                  key={item.color + activePortfolioTab}
-                  className={`group relative rounded-3xl overflow-hidden border-2 shadow-sm transition-all cursor-pointer ${theme.card} bg-gradient-to-br ${item.color} ${item.double ? 'md:col-span-2 lg:col-span-2' : ''} hover:shadow-xl`}
+                  key={`${item.color}-${i}-${activePortfolioTab}`}
+                  className={`group relative rounded-3xl overflow-hidden border-2 shadow-sm transition-all cursor-pointer ${theme.card} bg-gradient-to-br ${item.color} ${item.double ? 'md:col-span-2 lg:col-span-2' : ''} ${item.vertical ? 'md:row-span-2 lg:row-span-2' : ''} hover:shadow-xl`}
                 >
                   <div className={`absolute inset-0 flex items-center justify-center opacity-80 group-hover:opacity-100 transition-all duration-500 ${item.iconColor}`}>
                     {item.mediaUrl ? (
