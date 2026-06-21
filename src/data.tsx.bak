@@ -262,13 +262,9 @@ export const artItems: PortfolioItem[] = [
   ];
 
 export const videoItems: PortfolioItem[] = [
-  {
-    type: 'video',
-    color: 'from-red-200 to-orange-200 dark:from-red-900/50 dark:to-orange-900/50',
-    iconColor: 'text-red-600 dark:text-red-400',
-    icon: <VideoIcon />,
-    mediaUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
-  },
+  
+  { type: 'video', color: 'from-orange-200 to-yellow-200', iconColor: 'text-orange-600', icon: <Video className="w-10 h-10" />, double: true, mediaUrl: 'https://youtu.be/Vb57YfiA1is?list=RDVb57YfiA1is&vq=hd720' },
+
   ];
 
 export const nsfwItems: PortfolioItem[] = [
