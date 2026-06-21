@@ -288,6 +288,13 @@ export const videoItems: PortfolioItem[] = [
 ];
 
 export const nsfwItems: PortfolioItem[] = [
+  {
+    type: 'image',
+    color: 'from-red-200 to-rose-200 dark:from-red-900/50 dark:to-rose-900/50',
+    iconColor: 'text-red-600 dark:text-red-400',
+    icon: <ImageIcon />,
+    mediaUrl: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=1200&q=80'
+  },
   ];
 
 export const heroBgImages = [
