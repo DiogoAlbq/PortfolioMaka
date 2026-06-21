@@ -262,30 +262,7 @@ export const artItems: PortfolioItem[] = [
   ];
 
 export const videoItems: PortfolioItem[] = [
-  {
-    type: 'video',
-    color: 'from-red-200 to-orange-200 dark:from-red-900/50 dark:to-orange-900/50',
-    iconColor: 'text-red-600 dark:text-red-400',
-    icon: <VideoIcon />,
-    mediaUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
-  },
-  {
-    type: 'video',
-    color: 'from-orange-200 to-red-200 dark:from-orange-900/50 dark:to-red-900/50',
-    iconColor: 'text-orange-600 dark:text-orange-400',
-    icon: <VideoIcon />,
-    vertical: true,
-    mediaUrl: 'https://www.tiktok.com/@themakasan/video/1234567890'
-  },
-  {
-    type: 'video',
-    color: 'from-red-100 to-orange-100 dark:from-red-900/40 dark:to-orange-900/40',
-    iconColor: 'text-red-700 dark:text-red-300',
-    icon: <VideoIcon />,
-    double: true,
-    mediaUrl: 'https://www.youtube.com/watch?v=example'
-  }
-];
+  ];
 
 export const nsfwItems: PortfolioItem[] = [
   ];
