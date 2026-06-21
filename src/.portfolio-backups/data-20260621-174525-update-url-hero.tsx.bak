@@ -274,10 +274,11 @@ export const videoItems: PortfolioItem[] = [
 ];
 
 export const nsfwItems: PortfolioItem[] = [
+  { type: 'image', color: 'from-red-200 to-rose-200', iconColor: 'text-red-600', icon: <ImageIcon />, mediaUrl: 'https://res.cloudinary.com/dnbdnjpd4/image/upload/v1781970122/photo_2026-06-20_12-38-13_no3ei0.jpg' },
 ];
 
 export const heroBgImages: PortfolioItem[] = [
-  { type: 'video', color: 'from-orange-200 to-yellow-200', iconColor: 'text-orange-600', icon: <VideoIcon />, double: true, mediaUrl: '0' },
+  { type: 'video', color: 'from-orange-200 to-yellow-200', iconColor: 'text-orange-600', icon: <VideoIcon />, double: true, mediaUrl: 'https://res.cloudinary.com/dnbdnjpd4/video/upload/v1782073820/ssstwitter.com_1781395618946_zroyjk.mp4' },
 ];
 
 export const socialItems: SocialItem[] = [
