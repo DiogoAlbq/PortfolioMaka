@@ -34,7 +34,7 @@ export function Header({
   progressBarColor,
   isMobileMenuOpen,
   setIsMobileMenuOpen,
-  t,
+  t = {},
 }: HeaderProps) {
   const handleLanguageChange = (lang: Language, curr: Currency) => {
     setLanguage(lang);
