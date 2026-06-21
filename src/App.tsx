@@ -131,7 +131,7 @@ export default function App() {
         progressBarColor={progressBarColor}
         isMobileMenuOpen={isMobileMenuOpen}
         setIsMobileMenuOpen={setIsMobileMenuOpen}
-        t={tLang.nav}
+        t={tLang}
       />
 
       <main className="relative z-10 w-full h-full">
