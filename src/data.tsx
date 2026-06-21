@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 
 export const exchangeRate = 5.75;
 
@@ -264,8 +264,8 @@ export const artItems: PortfolioItem[] = [
 ];
 
 export const videoItems: PortfolioItem[] = [
-  
-  ];
+  { type: 'video', color: 'from-orange-200 to-yellow-200', iconColor: 'text-orange-600', icon: <VideoIcon />, double: true, mediaUrl: 'https://www.youtube.com/watch?v=Vb57YfiA1is&list=RDVb57YfiA1is&start_radio=1' },
+];
 
 export const nsfwItems: PortfolioItem[] = [
   ];

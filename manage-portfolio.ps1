@@ -1,100 +1,146 @@
-﻿# =============================================================================
-#  MAKA Portfolio Manager v6.0
-#  Gerenciador de Mídias do Portfólio — github.com/DiogoAlbq/PortfolioMaka
-#  Uso: .\manage-portfolio.ps1
+# =============================================================================
+#  MAKA Portfolio Manager v7.0
+#  Gerenciador do portfolio em src/data.tsx
+#
+#  Menu:      .\manage-portfolio.ps1
+#  Exemplos: .\manage-portfolio.ps1 -Action List -Category art
+#            .\manage-portfolio.ps1 -Action Add -Category art -Url "https://..." -Type image
+#            .\manage-portfolio.ps1 -Action Validate
 # =============================================================================
 
+[CmdletBinding()]
+param(
+    [string]$Action = "Menu",
+    [string]$Category = "",
+    [int]$Index = 0,
+    [int]$To = 0,
+    [string]$Type = "",
+    [string]$Url = "",
+    [string]$Layout = "normal",
+    [string]$WipeMode = "url",
+    [double]$Rate = 0,
+    [double]$FeePercent = 4.5,
+    [string]$CommitMessage = "",
+    [switch]$ClearUrl,
+    [switch]$Yes,
+    [switch]$DryRun,
+    [switch]$NoBrowser,
+    [switch]$NoBuild
+)
+
 $ErrorActionPreference = "Stop"
-$dataFile = Join-Path $PSScriptRoot "src\data.tsx"
-$backupFile = Join-Path $PSScriptRoot "src\data.tsx.bak"
-$siteUrl  = "https://DiogoAlbq.github.io/PortfolioMaka/"
-$global:lastAction = ""
 
-$global:utf8Bom = New-Object System.Text.UTF8Encoding $true
+$script:ManagerVersion = "7.0"
+$script:DataFile = Join-Path $PSScriptRoot "src\data.tsx"
+$script:LegacyBackupFile = Join-Path $PSScriptRoot "src\data.tsx.bak"
+$script:BackupDir = Join-Path $PSScriptRoot "src\.portfolio-backups"
+$script:SiteUrl = "https://DiogoAlbq.github.io/PortfolioMaka/"
+$script:DryRunMode = $DryRun.IsPresent
+$script:LastAction = ""
+$script:Utf8NoBom = New-Object System.Text.UTF8Encoding $false
 
-$global:arrays = @{
-    "1" = @{ Name = "artItems";   Label = "Artes (Ilustrações)"; Type = "image"; Color = "Yellow"  }
-    "2" = @{ Name = "videoItems"; Label = "Vídeos";              Type = "video"; Color = "Cyan"    }
-    "3" = @{ Name = "nsfwItems";  Label = "NSFW (18+)";          Type = "image"; Color = "Red"     }
-}
-
-function Write-BoxHeader {
-    param([string]$Title, [string]$Color = "Cyan", [int]$Width = 54)
-    $innerPad = $Width - 2
-    if ($Title) {
-        $prefix = "─── $Title "
-        $pad = $innerPad - $prefix.Length
-        if ($pad -lt 0) { $pad = 0 }
-        Write-Host "  ┌$prefix$(""─"" * $pad)┐" -ForegroundColor $Color
-    } else {
-        Write-Host "  ┌$(""─"" * $innerPad)┐" -ForegroundColor $Color
+$script:Categories = [ordered]@{
+    art = @{
+        Key = "art"
+        ArrayName = "artItems"
+        Label = "Artes"
+        Hint = "Ilustracoes e imagens publicas"
+        Color = "Yellow"
+        DefaultType = "image"
+    }
+    video = @{
+        Key = "video"
+        ArrayName = "videoItems"
+        Label = "Videos"
+        Hint = "YouTube, TikTok ou arquivos MP4/WebM"
+        Color = "Cyan"
+        DefaultType = "video"
+    }
+    nsfw = @{
+        Key = "nsfw"
+        ArrayName = "nsfwItems"
+        Label = "NSFW"
+        Hint = "Itens protegidos pelo aviso 18+"
+        Color = "Red"
+        DefaultType = "image"
     }
 }
 
-function Write-BoxLine {
-    param([string]$Content, [string]$Color = "White", [string]$BorderColor = "Cyan", [int]$Width = 54)
-    $innerPad = $Width - 2
-    $pad = $innerPad - $Content.Length - 2 
-    if ($pad -lt 0) { $pad = 0 }
-    Write-Host "  │ " -NoNewline -ForegroundColor $BorderColor
-    Write-Host $Content -NoNewline -ForegroundColor $Color
-    Write-Host (" " * $pad) -NoNewline
-    Write-Host " │" -ForegroundColor $BorderColor
+function Write-OK {
+    param([string]$Message)
+    Write-Host "  [OK] $Message" -ForegroundColor Green
 }
 
-function Write-BoxFooter {
-    param([string]$Color = "Cyan", [int]$Width = 54)
-    $innerPad = $Width - 2
-    Write-Host "  └$(""─"" * $innerPad)┘" -ForegroundColor $Color
+function Write-Warn {
+    param([string]$Message)
+    Write-Host "  ! $Message" -ForegroundColor Yellow
+}
+
+function Write-Err {
+    param([string]$Message)
+    Write-Host "  [ERRO] $Message" -ForegroundColor Red
+}
+
+function Write-Info {
+    param([string]$Message)
+    Write-Host "  - $Message" -ForegroundColor DarkGray
 }
 
 function Write-Header {
     param([string]$Subtitle = "")
+
     Clear-Host
     Write-Host ""
-    Write-Host "  ╔════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "  ║                                                    ║" -ForegroundColor Cyan
-    Write-Host "  ║   " -NoNewline -ForegroundColor Cyan
-    Write-Host "███╗   ███╗ █████╗ ██╗  ██╗ █████╗   " -NoNewline -ForegroundColor Yellow
-    Write-Host "║" -ForegroundColor Cyan
-    Write-Host "  ║   " -NoNewline -ForegroundColor Cyan
-    Write-Host "████╗ ████║██╔══██╗██║ ██╔╝██╔══██╗  " -NoNewline -ForegroundColor Yellow
-    Write-Host "║" -ForegroundColor Cyan
-    Write-Host "  ║   " -NoNewline -ForegroundColor Cyan
-    Write-Host "██╔████╔██║███████║█████╔╝ ███████║  " -NoNewline -ForegroundColor White
-    Write-Host "║" -ForegroundColor Cyan
-    Write-Host "  ║   " -NoNewline -ForegroundColor Cyan
-    Write-Host "██║╚██╔╝██║██╔══██║██╔═██╗ ██╔══██║  " -NoNewline -ForegroundColor DarkGray
-    Write-Host "║" -ForegroundColor Cyan
-    Write-Host "  ║   " -NoNewline -ForegroundColor Cyan
-    Write-Host "██║ ╚═╝ ██║██║  ██║██║  ██╗██║  ██║  " -NoNewline -ForegroundColor Magenta
-    Write-Host "║" -ForegroundColor Cyan
-    Write-Host "  ║                                                    ║" -ForegroundColor Cyan
-    Write-Host "  ║        " -NoNewline -ForegroundColor Cyan
-    Write-Host "Portfolio Manager  v6.0" -NoNewline -ForegroundColor White
-    Write-Host "                   ║" -ForegroundColor Cyan
-    Write-Host "  ╚════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host "  +================================================================+" -ForegroundColor DarkCyan
+    Write-Host "  |  MAKA Portfolio Manager                                      |" -ForegroundColor Cyan
+    Write-Host "  |  Conteudo, preview e deploy em um so lugar                   |" -ForegroundColor White
+    Write-Host "  +================================================================+" -ForegroundColor DarkCyan
+    Write-Host "  v$script:ManagerVersion  |  data.tsx" -ForegroundColor DarkGray
 
     if ($Subtitle) {
         Write-Host ""
-        Write-BoxHeader -Title "" -Color "DarkGray" -Width 54
-        Write-BoxLine -Content $Subtitle.PadRight(48) -Color "White" -BorderColor "DarkGray" -Width 54
-        Write-BoxFooter -Color "DarkGray" -Width 54
+        Write-Host "  $Subtitle" -ForegroundColor White
+        $rule = "-" * [Math]::Min(64, [Math]::Max(18, $Subtitle.Length))
+        Write-Host "  $rule" -ForegroundColor DarkGray
     }
 
-    if ($global:lastAction) {
-        Write-Host "  ✓ Última ação: $global:lastAction" -ForegroundColor DarkGreen
+    if ($script:DryRunMode) {
+        Write-Warn "Modo simulacao ativo: nenhuma alteracao sera gravada."
     }
+
+    if ($script:LastAction) {
+        Write-OK "Ultima acao: $script:LastAction"
+    }
+
     Write-Host ""
 }
 
-function Write-OK($msg)   { Write-Host "  ✓ $msg" -ForegroundColor Green }
-function Write-Warn($msg) { Write-Host "  ⚠ $msg" -ForegroundColor Yellow }
-function Write-Err($msg)  { Write-Host "  ✗ $msg" -ForegroundColor Red }
-function Write-Info($msg) { Write-Host "  · $msg" -ForegroundColor DarkGray }
+function Write-Section {
+    param([string]$Title, [string]$Color = "DarkCyan")
+    Write-Host ""
+    Write-Host "  $Title" -ForegroundColor $Color
+    $rule = "-" * [Math]::Min(64, [Math]::Max(12, $Title.Length))
+    Write-Host "  $rule" -ForegroundColor DarkGray
+}
+
+function Write-MenuItem {
+    param(
+        [string]$Key,
+        [string]$Title,
+        [string]$Description,
+        [string]$Color = "White"
+    )
+
+    Write-Host "  [" -NoNewline -ForegroundColor DarkGray
+    Write-Host $Key -NoNewline -ForegroundColor $Color
+    Write-Host "] " -NoNewline -ForegroundColor DarkGray
+    Write-Host $Title.PadRight(18) -NoNewline -ForegroundColor White
+    Write-Host $Description -ForegroundColor DarkGray
+}
 
 function Pause-Screen {
-    Write-Host "`n  [ Pressione qualquer tecla para continuar ]" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "  Pressione qualquer tecla para continuar..." -ForegroundColor DarkGray
     try {
         $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     } catch {
@@ -102,822 +148,1420 @@ function Pause-Screen {
     }
 }
 
-function Prompt-ChoiceKey {
-    param([string]$Message, [string[]]$ValidOptions)
-    Write-Host "  $Message " -NoNewline -ForegroundColor White
-    try {
-        while ($true) {
-            $keyInfo = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-            $choice = $keyInfo.Character.ToString().ToUpper()
-            
-            if ($keyInfo.VirtualKeyCode -eq 13 -and $ValidOptions -contains "ENTER") {
-                Write-Host ""
-                return "ENTER"
-            }
-            if ($ValidOptions -contains $choice) {
-                Write-Host $choice -ForegroundColor Cyan
-                return $choice
-            }
-        }
-    } catch {
-        while ($true) {
-            $choice = (Read-Host).ToUpper()
-            if ([string]::IsNullOrWhiteSpace($choice) -and $ValidOptions -contains "ENTER") { return "ENTER" }
-            if ($ValidOptions -contains $choice) { return $choice }
-            Write-Warn "Opção inválida."
-            Write-Host "  $Message " -NoNewline -ForegroundColor White
-        }
-    }
-}
+function Read-Choice {
+    param(
+        [string]$Prompt,
+        [string[]]$Options,
+        [string]$Default = ""
+    )
 
-function Prompt-Number {
-    param([string]$Message, [int]$Min, [int]$Max)
+    $valid = @($Options | ForEach-Object { $_.ToUpperInvariant() })
+    $defaultUpper = $Default.ToUpperInvariant()
+
     while ($true) {
-        Write-Host "  " -NoNewline
-        $input = Read-Host $Message
-        $n = 0
-        if ([int]::TryParse($input, [ref]$n)) {
-            if ($n -ge $Min -and $n -le $Max) { return $n }
+        $suffix = if ($Default) { " [$Default]" } else { "" }
+        Write-Host ("  {0}{1}: " -f $Prompt, $suffix) -NoNewline -ForegroundColor White
+        $raw = (Read-Host).Trim()
+
+        if ([string]::IsNullOrWhiteSpace($raw) -and $Default) {
+            return $defaultUpper
         }
-        Write-Warn "Digite um número válido entre $Min e $Max."
+
+        $choice = $raw.ToUpperInvariant()
+        if ($valid -contains $choice) {
+            return $choice
+        }
+
+        Write-Warn "Escolha uma opcao valida: $($Options -join ', ')."
     }
 }
 
-function Backup-Data {
-    if (Test-Path $dataFile) {
-        Copy-Item -Path $dataFile -Destination $backupFile -Force
+function Read-Number {
+    param(
+        [string]$Prompt,
+        [int]$Min,
+        [int]$Max,
+        [int]$Default = -1
+    )
+
+    while ($true) {
+        $suffix = if ($Default -ge 0) { " [$Default]" } else { "" }
+        Write-Host ("  {0}{1}: " -f $Prompt, $suffix) -NoNewline -ForegroundColor White
+        $raw = (Read-Host).Trim()
+        if ([string]::IsNullOrWhiteSpace($raw) -and $Default -ge 0) {
+            return $Default
+        }
+
+        $value = 0
+        if ([int]::TryParse($raw, [ref]$value) -and $value -ge $Min -and $value -le $Max) {
+            return $value
+        }
+
+        Write-Warn "Digite um numero entre $Min e $Max."
     }
 }
 
-function Restore-Data {
-    if (Test-Path $backupFile) {
-        Copy-Item -Path $backupFile -Destination $dataFile -Force
+function Confirm-Action {
+    param(
+        [string]$Message,
+        [switch]$DefaultYes
+    )
+
+    if ($Yes) {
         return $true
     }
-    return $false
+
+    $default = if ($DefaultYes) { "S" } else { "N" }
+    $choice = Read-Choice -Prompt "$Message (S/N)" -Options @("S", "N") -Default $default
+    return $choice -eq "S"
+}
+
+function Resolve-Action {
+    param([string]$Value)
+
+    $normalized = $Value.Trim().ToLowerInvariant()
+    $map = @{
+        "" = "Menu"
+        "menu" = "Menu"
+        "stats" = "Stats"
+        "status" = "Stats"
+        "list" = "List"
+        "listar" = "List"
+        "add" = "Add"
+        "adicionar" = "Add"
+        "update" = "Update"
+        "url" = "Update"
+        "remove" = "Remove"
+        "remover" = "Remove"
+        "move" = "Move"
+        "mover" = "Move"
+        "wipe" = "Wipe"
+        "rate" = "Rate"
+        "cambio" = "Rate"
+        "preview" = "Preview"
+        "build" = "Build"
+        "validate" = "Validate"
+        "validar" = "Validate"
+        "deploy" = "Deploy"
+        "undo" = "Undo"
+        "desfazer" = "Undo"
+        "help" = "Help"
+        "ajuda" = "Help"
+    }
+
+    if ($map.ContainsKey($normalized)) {
+        return $map[$normalized]
+    }
+
+    throw "Acao invalida: '$Value'. Use -Action Help para ver as opcoes."
+}
+
+function Resolve-Category {
+    param([string]$Value)
+
+    $normalized = $Value.Trim().ToLowerInvariant()
+    switch ($normalized) {
+        "" { return $null }
+        "1" { return $script:Categories.art }
+        "art" { return $script:Categories.art }
+        "arts" { return $script:Categories.art }
+        "arte" { return $script:Categories.art }
+        "artes" { return $script:Categories.art }
+        "artitems" { return $script:Categories.art }
+        "2" { return $script:Categories.video }
+        "video" { return $script:Categories.video }
+        "videos" { return $script:Categories.video }
+        "videos" { return $script:Categories.video }
+        "videoitems" { return $script:Categories.video }
+        "3" { return $script:Categories.nsfw }
+        "nsfw" { return $script:Categories.nsfw }
+        "18" { return $script:Categories.nsfw }
+        "nsfwitems" { return $script:Categories.nsfw }
+        default { throw "Categoria invalida: '$Value'. Use art, video ou nsfw." }
+    }
+}
+
+function Select-Category {
+    Write-Section "Escolha uma galeria"
+    foreach ($entry in $script:Categories.GetEnumerator()) {
+        $cat = $entry.Value
+        Write-MenuItem -Key ($(if ($cat.Key -eq "art") { "1" } elseif ($cat.Key -eq "video") { "2" } else { "3" })) -Title $cat.Label -Description $cat.Hint -Color $cat.Color
+    }
+    Write-MenuItem -Key "0" -Title "Voltar" -Description "Cancelar esta acao" -Color "DarkGray"
+
+    $choice = Read-Choice -Prompt "Galeria" -Options @("1", "2", "3", "0")
+    if ($choice -eq "0") {
+        return $null
+    }
+
+    return Resolve-Category $choice
+}
+
+function Assert-DataFile {
+    if (-not (Test-Path -LiteralPath $script:DataFile)) {
+        throw "Arquivo nao encontrado: $script:DataFile"
+    }
 }
 
 function Get-DataContent {
-    if (-not (Test-Path $dataFile)) {
-        Write-Err "Arquivo não encontrado: $dataFile"
-        exit 1
-    }
-    return [System.IO.File]::ReadAllText($dataFile, $global:utf8Bom)
+    Assert-DataFile
+    return [System.IO.File]::ReadAllText($script:DataFile, [System.Text.Encoding]::UTF8)
 }
 
-function Set-DataContent {
+function Get-LineEnding {
     param([string]$Content)
-    [System.IO.File]::WriteAllText($dataFile, $Content, $global:utf8Bom)
+    if ($Content.Contains("`r`n")) {
+        return "`r`n"
+    }
+    return "`n"
 }
 
-function Parse-PortfolioItems {
-    param([string]$ArrayName)
-    $content = Get-DataContent
-    $pattern = "export const ${ArrayName}: PortfolioItem\[\] = \[([\s\S]*?)\];"
-    $match = [regex]::Match($content, $pattern)
-    if (-not $match.Success) { return @() }
+function Backup-Data {
+    param([string]$Reason = "alteracao")
 
-    $block = $match.Groups[1].Value
-    $items = @()
+    if ($script:DryRunMode) {
+        return
+    }
+
+    Assert-DataFile
+    if (-not (Test-Path -LiteralPath $script:BackupDir)) {
+        New-Item -ItemType Directory -Path $script:BackupDir -Force | Out-Null
+    }
+
+    $safeReason = ($Reason -replace "[^a-zA-Z0-9_-]", "-").Trim("-")
+    if ([string]::IsNullOrWhiteSpace($safeReason)) {
+        $safeReason = "backup"
+    }
+
+    $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    $backupPath = Join-Path $script:BackupDir "data-$timestamp-$safeReason.tsx.bak"
+
+    Copy-Item -LiteralPath $script:DataFile -Destination $backupPath -Force
+    Copy-Item -LiteralPath $script:DataFile -Destination $script:LegacyBackupFile -Force
+
+    return $backupPath
+}
+
+function Get-LatestBackup {
+    $candidates = @()
+
+    if (Test-Path -LiteralPath $script:BackupDir) {
+        $candidates += Get-ChildItem -LiteralPath $script:BackupDir -Filter "*.bak" -File -ErrorAction SilentlyContinue
+    }
+
+    if (Test-Path -LiteralPath $script:LegacyBackupFile) {
+        $candidates += Get-Item -LiteralPath $script:LegacyBackupFile
+    }
+
+    return $candidates | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+}
+
+function Restore-LatestBackup {
+    $backup = Get-LatestBackup
+    if ($null -eq $backup) {
+        Write-Warn "Nenhum backup encontrado."
+        return $false
+    }
+
+    if ($script:DryRunMode) {
+        Write-Warn "Simulacao: restauraria $($backup.FullName)."
+        return $true
+    }
+
+    Copy-Item -LiteralPath $backup.FullName -Destination $script:DataFile -Force
+    Write-OK "Restaurado de: $($backup.Name)"
+    return $true
+}
+
+function Save-DataContent {
+    param(
+        [string]$Content,
+        [string]$Reason = "alteracao"
+    )
+
+    if ($script:DryRunMode) {
+        Write-Warn "Simulacao: src/data.tsx nao foi alterado."
+        return
+    }
+
+    Backup-Data -Reason $Reason | Out-Null
+    [System.IO.File]::WriteAllText($script:DataFile, $Content, $script:Utf8NoBom)
+}
+
+function Get-ArraySection {
+    param(
+        [string]$Content,
+        [string]$ArrayName
+    )
+
+    $escapedName = [regex]::Escape($ArrayName)
+    $pattern = "(?s)(export\s+const\s+$escapedName\s*:\s*PortfolioItem\[\]\s*=\s*\[)(.*?)(\r?\n?\s*\];)"
+    $match = [regex]::Match($Content, $pattern)
+    if (-not $match.Success) {
+        throw "Array '$ArrayName' nao encontrado em src/data.tsx."
+    }
+
+    return [PSCustomObject]@{
+        Match = $match
+        Prefix = $match.Groups[1].Value
+        Body = $match.Groups[2].Value
+        Suffix = $match.Groups[3].Value
+    }
+}
+
+function Get-TopLevelObjectRanges {
+    param([string]$Text)
+
+    $ranges = New-Object System.Collections.ArrayList
+    $depth = 0
+    $start = -1
+    $quote = ""
+    $escaped = $false
+
+    for ($i = 0; $i -lt $Text.Length; $i++) {
+        $ch = [string]$Text[$i]
+
+        if ($quote) {
+            if ($escaped) {
+                $escaped = $false
+                continue
+            }
+            if ($ch -eq "\") {
+                $escaped = $true
+                continue
+            }
+            if ($ch -eq $quote) {
+                $quote = ""
+            }
+            continue
+        }
+
+        if ($ch -eq "'" -or $ch -eq '"' -or $ch -eq "``") {
+            $quote = $ch
+            continue
+        }
+
+        if ($ch -eq "{") {
+            if ($depth -eq 0) {
+                $start = $i
+            }
+            $depth++
+            continue
+        }
+
+        if ($ch -eq "}") {
+            if ($depth -gt 0) {
+                $depth--
+                if ($depth -eq 0 -and $start -ge 0) {
+                    $ranges.Add([PSCustomObject]@{
+                        Start = $start
+                        Length = $i - $start + 1
+                    }) | Out-Null
+                    $start = -1
+                }
+            }
+        }
+    }
+
+    if ($depth -ne 0) {
+        throw "Nao consegui ler um dos itens do portfolio. Ha chaves '{ }' desbalanceadas."
+    }
+
+    return $ranges.ToArray()
+}
+
+function Get-QuotedProperty {
+    param(
+        [string]$Raw,
+        [string]$Name
+    )
+
+    $pattern = [regex]::Escape($Name) + "\s*:\s*(?:'([^']*)'|`"([^`"]*)`")"
+    $match = [regex]::Match($Raw, $pattern)
+    if (-not $match.Success) {
+        return ""
+    }
+
+    if ($match.Groups[1].Success) {
+        return $match.Groups[1].Value
+    }
+
+    return $match.Groups[2].Value
+}
+
+function Get-PortfolioItems {
+    param([string]$ArrayName)
+
+    $content = Get-DataContent
+    $section = Get-ArraySection -Content $content -ArrayName $ArrayName
+    $ranges = @(Get-TopLevelObjectRanges -Text $section.Body)
+    $items = New-Object System.Collections.ArrayList
     $index = 0
 
-    $itemMatches = [regex]::Matches($block, '\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}')
-    foreach ($m in $itemMatches) {
-        $itemText = $m.Groups[1].Value
-        $type = ""; $color = ""; $mediaUrl = ""
-        if ($itemText -match "type:\s*'([^']+)'")     { $type     = $Matches[1] }
-        if ($itemText -match "color:\s*'([^']+)'")    { $color    = $Matches[1] }
-        if ($itemText -match "mediaUrl:\s*'([^']+)'") { $mediaUrl = $Matches[1] }
-        $hasDouble    = $itemText -match "double:\s*true"
-        $hasVertical  = $itemText -match "vertical:\s*true"
+    foreach ($range in $ranges) {
+        $raw = $section.Body.Substring($range.Start, $range.Length)
+        $typeValue = Get-QuotedProperty -Raw $raw -Name "type"
+        $color = Get-QuotedProperty -Raw $raw -Name "color"
+        $iconColor = Get-QuotedProperty -Raw $raw -Name "iconColor"
+        $mediaUrl = Get-QuotedProperty -Raw $raw -Name "mediaUrl"
 
-        $items += [PSCustomObject]@{
-            Index     = $index
-            Type      = $type
-            Color     = $color
-            MediaUrl  = $mediaUrl
-            Double    = $hasDouble
-            Vertical  = $hasVertical
-            Raw       = $m.Value
+        $items.Add([PSCustomObject]@{
+            Index = $index
+            Type = $typeValue
+            Color = $color
+            IconColor = $iconColor
+            Double = ($raw -match "\bdouble\s*:\s*true\b")
+            Vertical = ($raw -match "\bvertical\s*:\s*true\b")
+            MediaUrl = $mediaUrl
+            Raw = $raw
             ArrayName = $ArrayName
-        }
+        }) | Out-Null
+
         $index++
     }
-    return $items
+
+    return $items.ToArray()
+}
+
+function Escape-TsString {
+    param([AllowNull()][string]$Value)
+
+    if ($null -eq $Value) {
+        return ""
+    }
+
+    return $Value.Replace("\", "\\").Replace("'", "\'")
+}
+
+function Get-DefaultStyle {
+    param(
+        [hashtable]$CategoryInfo,
+        [string]$ItemType
+    )
+
+    if ($CategoryInfo.Key -eq "nsfw") {
+        return @{ Color = "from-red-200 to-rose-200"; IconColor = "text-red-600" }
+    }
+
+    if ($ItemType -eq "video" -or $CategoryInfo.Key -eq "video") {
+        return @{ Color = "from-orange-200 to-yellow-200"; IconColor = "text-orange-600" }
+    }
+
+    return @{ Color = "from-amber-200 to-yellow-200"; IconColor = "text-amber-600" }
+}
+
+function Format-PortfolioItem {
+    param([object]$Item)
+
+    $typeValue = if ($Item.Type -eq "video") { "video" } else { "image" }
+    $color = if ($Item.Color) { $Item.Color } else { "from-amber-200 to-yellow-200" }
+    $iconColor = if ($Item.IconColor) { $Item.IconColor } else { "text-amber-600" }
+    $icon = if ($typeValue -eq "video") { "<VideoIcon />" } else { "<ImageIcon />" }
+
+    $parts = New-Object System.Collections.ArrayList
+    $parts.Add("type: '$typeValue'") | Out-Null
+    $parts.Add("color: '$(Escape-TsString $color)'") | Out-Null
+    $parts.Add("iconColor: '$(Escape-TsString $iconColor)'") | Out-Null
+    $parts.Add("icon: $icon") | Out-Null
+
+    if ($Item.Double) {
+        $parts.Add("double: true") | Out-Null
+    }
+
+    if ($Item.Vertical) {
+        $parts.Add("vertical: true") | Out-Null
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($Item.MediaUrl)) {
+        $parts.Add("mediaUrl: '$(Escape-TsString $Item.MediaUrl.Trim())'") | Out-Null
+    }
+
+    return "  { $($parts -join ', ') },"
+}
+
+function Set-PortfolioItems {
+    param(
+        [string]$ArrayName,
+        [object[]]$Items,
+        [string]$Reason
+    )
+
+    $content = Get-DataContent
+    $lineEnding = Get-LineEnding -Content $content
+    $section = Get-ArraySection -Content $content -ArrayName $ArrayName
+
+    $formatted = @($Items | ForEach-Object { Format-PortfolioItem $_ })
+    $body = if ($formatted.Count -gt 0) {
+        $lineEnding + ($formatted -join $lineEnding) + $lineEnding
+    } else {
+        $lineEnding
+    }
+
+    $newArray = $section.Prefix + $body + "];"
+    $newContent = $content.Substring(0, $section.Match.Index) + $newArray + $content.Substring($section.Match.Index + $section.Match.Length)
+
+    Save-DataContent -Content $newContent -Reason $Reason
 }
 
 function Get-PortfolioStats {
-    $stats = @{ TotalItems = 0; WithUrl = 0; Empty = 0; Images = 0; Videos = 0; Squares = 0; Horizontals = 0; Verticals = 0 }
-    foreach ($cat in $global:arrays.Values) {
-        $items = Parse-PortfolioItems $cat.Name
+    $stats = [ordered]@{
+        Total = 0
+        Filled = 0
+        Empty = 0
+        Images = 0
+        Videos = 0
+        Normal = 0
+        Wide = 0
+        Vertical = 0
+    }
+
+    foreach ($cat in $script:Categories.Values) {
+        $items = @(Get-PortfolioItems -ArrayName $cat.ArrayName)
         foreach ($item in $items) {
-            $stats.TotalItems++
-            if ($item.Type -eq "image") { $stats.Images++ } else { $stats.Videos++ }
-            if ($item.Vertical)       { $stats.Verticals++ }
-            elseif ($item.Double)     { $stats.Horizontals++ }
-            else                      { $stats.Squares++ }
-            if ($item.MediaUrl) { $stats.WithUrl++ } else { $stats.Empty++ }
+            $stats.Total++
+            if ($item.MediaUrl) { $stats.Filled++ } else { $stats.Empty++ }
+            if ($item.Type -eq "video") { $stats.Videos++ } else { $stats.Images++ }
+            if ($item.Vertical) { $stats.Vertical++ }
+            elseif ($item.Double) { $stats.Wide++ }
+            else { $stats.Normal++ }
         }
     }
+
     return $stats
 }
 
-function Set-ItemUrl {
-    param([string]$ArrayName, [int]$ItemIndex, [string]$NewUrl)
-    try {
-        Backup-Data
-        $content = Get-DataContent
-        $pattern = "export const ${ArrayName}: PortfolioItem\[\] = \[([\s\S]*?)\];"
-        $match = [regex]::Match($content, $pattern)
-        if (-not $match.Success) { return $false }
+function Get-LayoutName {
+    param([object]$Item)
+    if ($Item.Vertical) { return "vertical" }
+    if ($Item.Double) { return "wide" }
+    return "normal"
+}
 
-        $block = $match.Groups[1].Value
-        $itemMatches = [regex]::Matches($block, '\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}')
-        if ($ItemIndex -lt 0 -or $ItemIndex -ge $itemMatches.Count) { return $false }
+function Get-ShortUrl {
+    param([string]$Value, [int]$Max = 54)
+    if ([string]::IsNullOrWhiteSpace($Value)) {
+        return "(vazio)"
+    }
 
-        $oldItemMatch = $itemMatches[$ItemIndex]
-        $oldItem = $oldItemMatch.Value
-        
-        $prefix = $block.Substring(0, $oldItemMatch.Index)
-        $suffix = $block.Substring($oldItemMatch.Index + $oldItemMatch.Length)
+    if ($Value.Length -le $Max) {
+        return $Value
+    }
 
-        if ([string]::IsNullOrWhiteSpace($NewUrl)) {
-            $newItem = $oldItem -replace ",?\s*mediaUrl:\s*'[^']*'", ""
-        } elseif ($oldItem -match "mediaUrl:\s*'[^']*'") {
-            $safeUrl = $NewUrl.Replace('$', '$$')
-            $newItem = $oldItem -replace "mediaUrl:\s*'[^']*'", "mediaUrl: '$safeUrl'"
+    return $Value.Substring(0, $Max - 3) + "..."
+}
+
+function Show-Stats {
+    $stats = Get-PortfolioStats
+    $filledPercent = if ($stats.Total -gt 0) { [math]::Round(($stats.Filled / [double]$stats.Total) * 100) } else { 0 }
+    $barSize = 28
+    $filledSize = [Math]::Round(($filledPercent / 100) * $barSize)
+    $emptySize = $barSize - $filledSize
+    $bar = ("#" * $filledSize) + ("-" * $emptySize)
+    $barColor = if ($filledPercent -ge 75) { "Green" } elseif ($filledPercent -ge 40) { "Yellow" } else { "Red" }
+
+    Write-Section "Status do portfolio"
+    Write-Host "  Itens totais : " -NoNewline -ForegroundColor DarkGray
+    Write-Host $stats.Total -ForegroundColor White
+    Write-Host "  Com midia    : " -NoNewline -ForegroundColor DarkGray
+    Write-Host $stats.Filled -NoNewline -ForegroundColor Green
+    Write-Host " preenchidos, " -NoNewline -ForegroundColor DarkGray
+    Write-Host $stats.Empty -NoNewline -ForegroundColor Yellow
+    Write-Host " vazios" -ForegroundColor DarkGray
+    Write-Host "  Tipos        : " -NoNewline -ForegroundColor DarkGray
+    Write-Host "$($stats.Images) imagens, $($stats.Videos) videos" -ForegroundColor White
+    Write-Host "  Layouts      : " -NoNewline -ForegroundColor DarkGray
+    Write-Host "$($stats.Normal) normal, $($stats.Wide) wide, $($stats.Vertical) vertical" -ForegroundColor White
+    Write-Host "  Preenchido   : " -NoNewline -ForegroundColor DarkGray
+    Write-Host "[$bar] $filledPercent%" -ForegroundColor $barColor
+}
+
+function Show-Items {
+    param([hashtable]$CategoryInfo)
+
+    $items = @(Get-PortfolioItems -ArrayName $CategoryInfo.ArrayName)
+    Write-Section "$($CategoryInfo.Label) ($($items.Count) item(ns))" $CategoryInfo.Color
+
+    if ($items.Count -eq 0) {
+        Write-Info "Galeria vazia."
+        return
+    }
+
+    Write-Host "  #   Tipo    Layout    Estado       URL" -ForegroundColor DarkGray
+    Write-Host "  --  ------  --------  -----------  ------------------------------------------------------" -ForegroundColor DarkGray
+
+    foreach ($item in $items) {
+        $number = ($item.Index + 1).ToString().PadLeft(2)
+        $typeValue = $item.Type.PadRight(6)
+        $layoutValue = (Get-LayoutName $item).PadRight(8)
+        $state = if ($item.MediaUrl) { "preenchido" } else { "vazio" }
+        $stateColor = if ($item.MediaUrl) { "Green" } else { "Yellow" }
+
+        Write-Host "  $number  " -NoNewline -ForegroundColor Cyan
+        Write-Host "$typeValue  " -NoNewline -ForegroundColor White
+        Write-Host "$layoutValue  " -NoNewline -ForegroundColor Magenta
+        Write-Host $state.PadRight(11) -NoNewline -ForegroundColor $stateColor
+        Write-Host "  $(Get-ShortUrl $item.MediaUrl)" -ForegroundColor DarkGray
+    }
+}
+
+function Get-MediaKindFromUrl {
+    param([string]$Value)
+
+    if ([string]::IsNullOrWhiteSpace($Value)) {
+        return "unknown"
+    }
+
+    if ($Value -match "(youtu\.be|youtube\.com|tiktok\.com)" -or $Value -match "\.(mp4|webm|ogg|mov)(\?.*)?$") {
+        return "video"
+    }
+
+    if ($Value -match "\.(jpg|jpeg|png|gif|webp|avif|svg)(\?.*)?$" -or $Value -match "cloudinary\.com/.*/image/upload") {
+        return "image"
+    }
+
+    return "unknown"
+}
+
+function Normalize-ItemType {
+    param(
+        [string]$Value,
+        [hashtable]$CategoryInfo,
+        [string]$MediaUrl = ""
+    )
+
+    $normalized = $Value.Trim().ToLowerInvariant()
+    if ([string]::IsNullOrWhiteSpace($normalized) -or $normalized -eq "auto") {
+        $fromUrl = Get-MediaKindFromUrl $MediaUrl
+        if ($fromUrl -ne "unknown") {
+            return $fromUrl
+        }
+        return $CategoryInfo.DefaultType
+    }
+
+    switch ($normalized) {
+        "1" { return "image" }
+        "img" { return "image" }
+        "image" { return "image" }
+        "imagem" { return "image" }
+        "2" { return "video" }
+        "vid" { return "video" }
+        "video" { return "video" }
+        "video" { return "video" }
+        default { throw "Tipo invalido: '$Value'. Use image ou video." }
+    }
+}
+
+function Normalize-Layout {
+    param(
+        [string]$Value,
+        [string]$MediaUrl = ""
+    )
+
+    $normalized = $Value.Trim().ToLowerInvariant()
+    if ([string]::IsNullOrWhiteSpace($normalized) -or $normalized -eq "auto") {
+        if ($MediaUrl -match "tiktok\.com") {
+            return "vertical"
+        }
+        if ($MediaUrl -match "(youtu\.be|youtube\.com)") {
+            return "wide"
+        }
+        return "normal"
+    }
+
+    switch ($normalized) {
+        "n" { return "normal" }
+        "normal" { return "normal" }
+        "quadrado" { return "normal" }
+        "square" { return "normal" }
+        "h" { return "wide" }
+        "wide" { return "wide" }
+        "horizontal" { return "wide" }
+        "duplo" { return "wide" }
+        "v" { return "vertical" }
+        "vertical" { return "vertical" }
+        default { throw "Layout invalido: '$Value'. Use normal, wide ou vertical." }
+    }
+}
+
+function New-PortfolioItemObject {
+    param(
+        [hashtable]$CategoryInfo,
+        [string]$ItemType,
+        [string]$MediaUrl,
+        [string]$LayoutName
+    )
+
+    $style = Get-DefaultStyle -CategoryInfo $CategoryInfo -ItemType $ItemType
+    return [PSCustomObject]@{
+        Index = -1
+        Type = $ItemType
+        Color = $style.Color
+        IconColor = $style.IconColor
+        Double = ($LayoutName -eq "wide")
+        Vertical = ($LayoutName -eq "vertical")
+        MediaUrl = $MediaUrl.Trim()
+        Raw = ""
+        ArrayName = $CategoryInfo.ArrayName
+    }
+}
+
+function Add-PortfolioItem {
+    param(
+        [hashtable]$CategoryInfo,
+        [string]$ItemType,
+        [string]$MediaUrl,
+        [string]$LayoutName
+    )
+
+    $items = @(Get-PortfolioItems -ArrayName $CategoryInfo.ArrayName)
+    $newItem = New-PortfolioItemObject -CategoryInfo $CategoryInfo -ItemType $ItemType -MediaUrl $MediaUrl -LayoutName $LayoutName
+    $items += $newItem
+
+    Set-PortfolioItems -ArrayName $CategoryInfo.ArrayName -Items $items -Reason "add-$($CategoryInfo.Key)"
+    Write-OK "Item adicionado em $($CategoryInfo.Label)."
+}
+
+function Update-PortfolioItemUrl {
+    param(
+        [hashtable]$CategoryInfo,
+        [int]$OneBasedIndex,
+        [string]$NewUrl
+    )
+
+    $items = @(Get-PortfolioItems -ArrayName $CategoryInfo.ArrayName)
+    if ($OneBasedIndex -lt 1 -or $OneBasedIndex -gt $items.Count) {
+        throw "Indice invalido. Use um numero entre 1 e $($items.Count)."
+    }
+
+    $items[$OneBasedIndex - 1].MediaUrl = $NewUrl.Trim()
+    Set-PortfolioItems -ArrayName $CategoryInfo.ArrayName -Items $items -Reason "update-url-$($CategoryInfo.Key)"
+    Write-OK "URL do item $OneBasedIndex atualizada."
+}
+
+function Remove-PortfolioItem {
+    param(
+        [hashtable]$CategoryInfo,
+        [int]$OneBasedIndex
+    )
+
+    $items = @(Get-PortfolioItems -ArrayName $CategoryInfo.ArrayName)
+    if ($OneBasedIndex -lt 1 -or $OneBasedIndex -gt $items.Count) {
+        throw "Indice invalido. Use um numero entre 1 e $($items.Count)."
+    }
+
+    $kept = New-Object System.Collections.ArrayList
+    for ($i = 0; $i -lt $items.Count; $i++) {
+        if ($i -ne ($OneBasedIndex - 1)) {
+            $kept.Add($items[$i]) | Out-Null
+        }
+    }
+
+    Set-PortfolioItems -ArrayName $CategoryInfo.ArrayName -Items ($kept.ToArray()) -Reason "remove-$($CategoryInfo.Key)"
+    Write-OK "Item $OneBasedIndex removido de $($CategoryInfo.Label)."
+}
+
+function Move-PortfolioItem {
+    param(
+        [hashtable]$CategoryInfo,
+        [int]$FromIndex,
+        [int]$ToIndex
+    )
+
+    $items = @(Get-PortfolioItems -ArrayName $CategoryInfo.ArrayName)
+    if ($items.Count -lt 2) {
+        throw "Esta galeria precisa de pelo menos 2 itens para reordenar."
+    }
+    if ($FromIndex -lt 1 -or $FromIndex -gt $items.Count) {
+        throw "Indice de origem invalido. Use 1 a $($items.Count)."
+    }
+    if ($ToIndex -lt 1 -or $ToIndex -gt $items.Count) {
+        throw "Posicao de destino invalida. Use 1 a $($items.Count)."
+    }
+    if ($FromIndex -eq $ToIndex) {
+        Write-Warn "Origem e destino sao iguais. Nada mudou."
+        return
+    }
+
+    $list = [System.Collections.ArrayList]@($items)
+    $item = $list[$FromIndex - 1]
+    $list.RemoveAt($FromIndex - 1)
+    $list.Insert($ToIndex - 1, $item)
+
+    Set-PortfolioItems -ArrayName $CategoryInfo.ArrayName -Items ($list.ToArray()) -Reason "move-$($CategoryInfo.Key)"
+    Write-OK "Item movido da posicao $FromIndex para $ToIndex."
+}
+
+function Invoke-Wipe {
+    param(
+        [string]$TargetType,
+        [string]$Mode
+    )
+
+    $itemType = Normalize-ItemType -Value $TargetType -CategoryInfo $script:Categories.art
+    $normalizedMode = $Mode.Trim().ToLowerInvariant()
+    if ($normalizedMode -notin @("url", "slots", "slot", "delete", "deletar")) {
+        throw "Modo de wipe invalido. Use url ou slots."
+    }
+
+    $deleteSlots = $normalizedMode -in @("slots", "slot", "delete", "deletar")
+    $affected = New-Object System.Collections.ArrayList
+
+    foreach ($cat in $script:Categories.Values) {
+        $items = @(Get-PortfolioItems -ArrayName $cat.ArrayName)
+        foreach ($item in $items) {
+            if ($item.Type -eq $itemType -and ($deleteSlots -or $item.MediaUrl)) {
+                $affected.Add([PSCustomObject]@{
+                    Category = $cat
+                    Item = $item
+                }) | Out-Null
+            }
+        }
+    }
+
+    if ($affected.Count -eq 0) {
+        Write-Warn "Nenhum item encontrado para limpar."
+        return
+    }
+
+    Write-Section "Previa da limpeza" "Yellow"
+    foreach ($entry in $affected) {
+        Write-Host "  $($entry.Category.Label) #$($entry.Item.Index + 1) " -NoNewline -ForegroundColor Red
+        Write-Host "$(Get-ShortUrl $entry.Item.MediaUrl 64)" -ForegroundColor DarkGray
+    }
+
+    $modeLabel = if ($deleteSlots) { "deletar slots" } else { "zerar URLs" }
+    if (-not (Confirm-Action "Confirmar $modeLabel em $($affected.Count) item(ns)?")) {
+        Write-Warn "Operacao cancelada."
+        return
+    }
+
+    foreach ($cat in $script:Categories.Values) {
+        $items = @(Get-PortfolioItems -ArrayName $cat.ArrayName)
+        if ($deleteSlots) {
+            $newItems = @($items | Where-Object { $_.Type -ne $itemType })
         } else {
-            $safeUrl = $NewUrl.Replace('$', '$$')
-            $newItem = $oldItem -replace '\}$', ", mediaUrl: '$safeUrl' }"
+            foreach ($item in $items) {
+                if ($item.Type -eq $itemType) {
+                    $item.MediaUrl = ""
+                }
+            }
+            $newItems = $items
         }
 
-        $newBlock = $prefix + $newItem + $suffix
-        $newContent = $content.Replace($block, $newBlock)
-        Set-DataContent $newContent
-        return $true
-    } catch {
-        Write-Err "Erro ao alterar URL: $_"
-        return $false
+        Set-PortfolioItems -ArrayName $cat.ArrayName -Items $newItems -Reason "wipe-$itemType"
+    }
+
+    Write-OK "Limpeza concluida."
+}
+
+function Set-ExchangeRate {
+    param([double]$NewRate)
+
+    if ($NewRate -le 0) {
+        throw "A taxa precisa ser maior que zero."
+    }
+
+    $content = Get-DataContent
+    $rateText = $NewRate.ToString("0.00", [System.Globalization.CultureInfo]::InvariantCulture)
+    $pattern = "export\s+const\s+exchangeRate\s*=\s*[\d\.]+;"
+
+    if (-not [regex]::IsMatch($content, $pattern)) {
+        throw "Nao encontrei 'export const exchangeRate = ...;' em src/data.tsx."
+    }
+
+    $newContent = [regex]::Replace($content, $pattern, "export const exchangeRate = $rateText;", 1)
+    Save-DataContent -Content $newContent -Reason "exchange-rate"
+    Write-OK "Taxa de cambio atualizada para R$ $rateText."
+}
+
+function Update-ExchangeRateFromApi {
+    Write-Info "Buscando cotacao em open.er-api.com..."
+    $response = Invoke-RestMethod -Uri "https://open.er-api.com/v6/latest/USD" -Method Get -TimeoutSec 20
+    $usdToBrl = [double]$response.rates.BRL
+
+    if ($usdToBrl -le 0) {
+        throw "A API nao retornou uma cotacao valida."
+    }
+
+    $finalRate = [Math]::Round($usdToBrl * (1 - ($FeePercent / 100)), 2)
+    Write-Host "  Cotacao USD/BRL : R$ $($usdToBrl.ToString('0.00'))" -ForegroundColor Green
+    Write-Host "  Desconto/taxa   : $FeePercent%" -ForegroundColor DarkGray
+    Write-Host "  Valor final     : R$ $($finalRate.ToString('0.00'))" -ForegroundColor Magenta
+
+    if (Confirm-Action "Salvar esta taxa?") {
+        Set-ExchangeRate -NewRate $finalRate
     }
 }
 
-function Move-ItemOrder {
-    param([string]$ArrayName, [int]$IndexA, [int]$IndexB)
-    try {
-        Backup-Data
-        $content = Get-DataContent
-        $pattern = "export const ${ArrayName}: PortfolioItem\[\] = \[([\s\S]*?)\];"
-        $match = [regex]::Match($content, $pattern)
-        if (-not $match.Success) { return $false }
+function Test-PortfolioData {
+    $errors = New-Object System.Collections.ArrayList
+    $warnings = New-Object System.Collections.ArrayList
 
-        $block = $match.Groups[1].Value
-        $itemMatches = [regex]::Matches($block, '\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}')
-        if ($IndexA -lt 0 -or $IndexA -ge $itemMatches.Count) { return $false }
-        if ($IndexB -lt 0 -or $IndexB -ge $itemMatches.Count) { return $false }
-
-        $valA = $itemMatches[$IndexA].Value
-        $valB = $itemMatches[$IndexB].Value
-        
-        $minIdx = [math]::Min($IndexA, $IndexB)
-        $maxIdx = [math]::Max($IndexA, $IndexB)
-        $matchMin = $itemMatches[$minIdx]
-        $matchMax = $itemMatches[$maxIdx]
-
-        $part1 = $block.Substring(0, $matchMin.Index)
-        $part2 = $block.Substring($matchMin.Index + $matchMin.Length, $matchMax.Index - ($matchMin.Index + $matchMin.Length))
-        $part3 = $block.Substring($matchMax.Index + $matchMax.Length)
-
-        $newBlock = $part1 + $matchMax.Value + $part2 + $matchMin.Value + $part3
-        $newContent = $content.Replace($block, $newBlock)
-        
-        Set-DataContent $newContent
-        return $true
-    } catch {
-        Write-Err "Erro ao reordenar: $_"
-        return $false
-    }
-}
-
-function Add-Item {
-    param([string]$ArrayName, [string]$Type, [string]$MediaUrl, [bool]$Double = $false, [bool]$Vertical = $false)
-    try {
-        Backup-Data
-        $content = Get-DataContent
-        switch ($ArrayName) {
-            "artItems"   { $color = "from-amber-200 to-yellow-200"; $iconColor = "text-amber-600";  $iconJsx = "<ImageIcon className=`"w-10 h-10`" />" }
-            "videoItems" { $color = "from-orange-200 to-yellow-200"; $iconColor = "text-orange-600"; $iconJsx = "<Video className=`"w-10 h-10`" />" }
-            "nsfwItems"  { $color = "from-red-200 to-rose-200";    $iconColor = "text-red-600";    $iconJsx = "<ImageIcon className=`"w-10 h-10`" />" }
+    foreach ($cat in $script:Categories.Values) {
+        try {
+            $items = @(Get-PortfolioItems -ArrayName $cat.ArrayName)
+        } catch {
+            $errors.Add($_.Exception.Message) | Out-Null
+            continue
         }
-        $doubleStr   = if ($Double)   { ", double: true" }   else { "" }
-        $verticalStr = if ($Vertical) { ", vertical: true" } else { "" }
-        $mediaStr    = if ($MediaUrl) { ", mediaUrl: '$MediaUrl'" } else { "" }
-        
-        $newEntry  = "  { type: '$Type', color: '$color', iconColor: '$iconColor', icon: $iconJsx$doubleStr$verticalStr$mediaStr },"
-        $newEntryEscaped = $newEntry.Replace('$', '$$')
-        $newContent = $content -replace "(export const ${ArrayName}: PortfolioItem\[\] = \[[\s\S]*?)(];)", "`$1`n$newEntryEscaped`n`$2"
-        Set-DataContent $newContent
-        return $true
-    } catch {
-        Write-Err "Erro ao adicionar item: $_"
-        return $false
+
+        for ($i = 0; $i -lt $items.Count; $i++) {
+            $item = $items[$i]
+            $label = "$($cat.Label) #$($i + 1)"
+
+            if ($item.Type -notin @("image", "video")) {
+                $errors.Add(("{0}: tipo invalido '{1}'." -f $label, $item.Type)) | Out-Null
+            }
+
+            if ($item.Double -and $item.Vertical) {
+                $errors.Add(("{0}: nao pode ser wide e vertical ao mesmo tempo." -f $label)) | Out-Null
+            }
+
+            if ([string]::IsNullOrWhiteSpace($item.Color) -or [string]::IsNullOrWhiteSpace($item.IconColor)) {
+                $warnings.Add(("{0}: cores ausentes; o manager corrigira ao editar este item." -f $label)) | Out-Null
+            }
+
+            if (-not [string]::IsNullOrWhiteSpace($item.MediaUrl)) {
+                $kind = Get-MediaKindFromUrl $item.MediaUrl
+                if ($kind -eq "unknown") {
+                    $warnings.Add(("{0}: nao reconheci o tipo da URL." -f $label)) | Out-Null
+                } elseif ($kind -ne $item.Type) {
+                    $errors.Add(("{0}: URL parece '{1}', mas o item esta como '{2}'." -f $label, $kind, $item.Type)) | Out-Null
+                }
+            }
+        }
     }
+
+    Write-Section "Validacao"
+    if ($errors.Count -eq 0 -and $warnings.Count -eq 0) {
+        Write-OK "Tudo certo com os dados do portfolio."
+        return $true
+    }
+
+    foreach ($warning in $warnings) {
+        Write-Warn $warning
+    }
+
+    foreach ($error in $errors) {
+        Write-Err $error
+    }
+
+    if ($errors.Count -eq 0) {
+        Write-Warn "Validacao passou com avisos."
+        return $true
+    }
+
+    return $false
 }
 
-function Remove-PortfolioSlot {
-    param([string]$ArrayName, [int]$ItemIndex)
-    try {
-        Backup-Data
-        $content = Get-DataContent
-        $pattern = "export const ${ArrayName}: PortfolioItem\[\] = \[([\s\S]*?)\];"
-        $match = [regex]::Match($content, $pattern)
-        if (-not $match.Success) { return $false }
-
-        $block = $match.Groups[1].Value
-        $itemMatches = [regex]::Matches($block, '\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}')
-        if ($ItemIndex -lt 0 -or $ItemIndex -ge $itemMatches.Count) { return $false }
-
-        $oldItemMatch = $itemMatches[$ItemIndex]
-        $prefix = $block.Substring(0, $oldItemMatch.Index)
-        $suffix = $block.Substring($oldItemMatch.Index + $oldItemMatch.Length)
-
-        $suffix = $suffix -replace "^,?\s*", ""
-
-        $newBlock = $prefix + $suffix
-        $newContent = $content.Replace($block, $newBlock)
-        Set-DataContent $newContent
-        return $true
-    } catch {
-        Write-Err "Erro ao remover item: $_"
-        return $false
-    }
+function Test-CommandAvailable {
+    param([string]$Name)
+    return $null -ne (Get-Command $Name -ErrorAction SilentlyContinue)
 }
 
-function Deploy-Changes {
-    param([string]$CommitMessage = "")
-    Write-Host ""
-    Write-BoxHeader -Title "Sincronizando com GitHub..." -Color "DarkCyan" -Width 54
-    Write-BoxFooter -Color "DarkCyan" -Width 54
-    Write-Host ""
+function Invoke-NpmBuild {
+    if (-not (Test-CommandAvailable "npm")) {
+        throw "NPM nao encontrado no PATH."
+    }
 
     Push-Location $PSScriptRoot
-    $oldPref = $ErrorActionPreference
-    $ErrorActionPreference = "Continue"
-
     try {
-        if (-not (Get-Command "npm" -ErrorAction SilentlyContinue)) {
-            Write-Err "NPM não encontrado no PATH."
-            return $false
-        }
-        if (-not (Get-Command "git" -ErrorAction SilentlyContinue)) {
-            Write-Err "GIT não encontrado no PATH."
-            return $false
-        }
-
-        Write-Host "  [1/3] " -NoNewline -ForegroundColor DarkGray
-        Write-Host "Compilando o site... " -NoNewline -ForegroundColor White
-        $buildResult = cmd /c npm run build 2>&1
+        Write-Section "Build de producao"
+        Write-Info "Executando npm run build..."
+        & npm run build
         if ($LASTEXITCODE -ne 0) {
-            Write-Host " FALHOU" -ForegroundColor Red
-            return $false
+            throw "Build falhou. Corrija os erros acima antes de publicar."
         }
-        Write-Host " OK" -ForegroundColor Green
-
-        Write-Host "  [2/3] " -NoNewline -ForegroundColor DarkGray
-        Write-Host "Registrando alterações... " -NoNewline -ForegroundColor White
-        
-        & git add -A 2>&1 | Out-Null
-        $gitStatus = & git status --porcelain 2>&1
-        if ([string]::IsNullOrWhiteSpace($gitStatus)) {
-            Write-Host " IGNORADO" -ForegroundColor Yellow
-        } else {
-            $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
-            $msg = if ($CommitMessage) { $CommitMessage } else { "Update via Manager v6.0 — $timestamp" }
-            $commitResult = & git commit -m "$msg" 2>&1
-            if ($LASTEXITCODE -ne 0) {
-                Write-Host " FALHOU" -ForegroundColor Red
-                return $false
-            }
-            Write-Host " OK" -ForegroundColor Green
-        }
-
-        Write-Host "  [3/3] " -NoNewline -ForegroundColor DarkGray
-        Write-Host "Enviando para o GitHub... " -NoNewline -ForegroundColor White
-        $pushResult = & git push origin main 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host " FALHOU" -ForegroundColor Red
-            return $false
-        }
-        Write-Host " OK" -ForegroundColor Green
-
-        Write-Host ""
-        Write-Host "  ╔════════════════════════════════════════════════════╗" -ForegroundColor Green
-        Write-Host "  ║  ✓  Deploy concluído com sucesso!                  ║" -ForegroundColor Green
-        Write-Host "  ║                                                    ║" -ForegroundColor Green
-        Write-Host "  ║  O site atualiza em ~1-3 min:                      ║" -ForegroundColor White
-        Write-Host "  ║  $($siteUrl.PadRight(48))║" -ForegroundColor Yellow
-        Write-Host "  ║                                                    ║" -ForegroundColor Green
-        Write-Host "  ║  Dica: Ctrl+F5 no navegador para limpar cache      ║" -ForegroundColor DarkGray
-        Write-Host "  ╚════════════════════════════════════════════════════╝" -ForegroundColor Green
-
-        return $true
+        Write-OK "Build concluido."
     } finally {
-        $ErrorActionPreference = $oldPref
         Pop-Location
     }
 }
 
-function View-Stats {
-    $s = Get-PortfolioStats
-    $filled = if ($s.TotalItems -gt 0) { [math]::Round(($s.WithUrl / [double]$s.TotalItems) * 100) } else { 0 }
-    
-    $tStr = $s.TotalItems.ToString().PadRight(4)
-    $iStr = $s.Images.ToString().PadRight(4)
-    $vStr = $s.Videos.ToString().PadRight(4)
-    $qStr = $s.Squares.ToString().PadRight(4)
-    $hStr = $s.Horizontals.ToString().PadRight(4)
-    $vtStr = $s.Verticals.ToString().PadRight(4)
-    
-    Write-BoxHeader -Title "Status do Portfólio" -Color "DarkCyan" -Width 54
-    
-    Write-Host "  │  Total: " -NoNewline -ForegroundColor DarkCyan
-    Write-Host $tStr -NoNewline -ForegroundColor White
-    Write-Host " Imagens: " -NoNewline -ForegroundColor DarkCyan
-    Write-Host $iStr -NoNewline -ForegroundColor Yellow
-    Write-Host " Vídeos: " -NoNewline -ForegroundColor DarkCyan
-    Write-Host $vStr -NoNewline -ForegroundColor Cyan
-    Write-Host (" " * 12 + "│") -ForegroundColor DarkCyan
+function Test-PortOpen {
+    param(
+        [string]$HostName = "127.0.0.1",
+        [int]$Port = 5173
+    )
 
-    Write-Host "  │  Quad: " -NoNewline -ForegroundColor DarkCyan
-    Write-Host $qStr -NoNewline -ForegroundColor Gray
-    Write-Host " Horiz: " -NoNewline -ForegroundColor DarkCyan
-    Write-Host $hStr -NoNewline -ForegroundColor Cyan
-    Write-Host " Vert: " -NoNewline -ForegroundColor DarkCyan
-    Write-Host $vtStr -NoNewline -ForegroundColor Magenta
-    Write-Host (" " * 16 + "│") -ForegroundColor DarkCyan
-
-    # Barra de Progresso
-    $barLen = 20
-    $filledLen = [math]::Round(($filled / 100) * $barLen)
-    $emptyLen = $barLen - $filledLen
-    if ($emptyLen -lt 0) { $emptyLen = 0 }
-    $barStr = ("█" * $filledLen) + ("░" * $emptyLen)
-
-    Write-Host "  │  Preench: " -NoNewline -ForegroundColor DarkCyan
-    $colorFilled = if ($filled -ge 70) { "Green" } elseif ($filled -ge 40) { "Yellow" } else { "Red" }
-    Write-Host "[$barStr] $filled%".PadRight(30) -NoNewline -ForegroundColor $colorFilled
-    Write-Host (" " * 8 + "│") -ForegroundColor DarkCyan
-    
-    Write-BoxFooter -Color "DarkCyan" -Width 54
-    Write-Host ""
+    $client = New-Object System.Net.Sockets.TcpClient
+    try {
+        $async = $client.BeginConnect($HostName, $Port, $null, $null)
+        $connected = $async.AsyncWaitHandle.WaitOne(500, $false)
+        if (-not $connected) {
+            return $false
+        }
+        $client.EndConnect($async)
+        return $true
+    } catch {
+        return $false
+    } finally {
+        $client.Close()
+    }
 }
 
-function View-Items {
-    param([string]$ArrayName, [string]$Label, [string]$LabelColor = "Magenta")
-    $items = Parse-PortfolioItems $ArrayName
-    
-    Write-BoxHeader -Title $Label -Color $LabelColor -Width 54
+function Start-LocalPreview {
+    if (-not (Test-CommandAvailable "npm")) {
+        throw "NPM nao encontrado no PATH."
+    }
 
-    if ($items.Count -eq 0) {
-        Write-BoxLine -Content "(galeria vazia)".PadRight(48) -Color "DarkGray" -BorderColor $LabelColor -Width 54
+    $url = "http://localhost:5173"
+    Write-Section "Preview local"
+
+    if (Test-PortOpen -Port 5173) {
+        Write-OK "Servidor ja esta ativo em $url."
     } else {
-        foreach ($item in $items) {
-            $num = "[$($item.Index + 1)]".PadRight(4)
-            if ($item.Vertical) {
-                $formatTag = "[VERTICAL]  "
-                $tagColor = "Magenta"
-            } elseif ($item.Double) {
-                $formatTag = "[HORIZONTAL]"
-                $tagColor = "Cyan"
-            } else {
-                $formatTag = "[QUADRADO]  "
-                $tagColor = "DarkGray"
-            }
-            
-            Write-Host "  │ " -NoNewline -ForegroundColor $LabelColor
-            Write-Host "$num" -NoNewline -ForegroundColor Cyan
-            Write-Host " $formatTag " -NoNewline -ForegroundColor $tagColor
-            
-            $urlSpace = 32
-            if ($item.MediaUrl) {
-                $url = $item.MediaUrl
-                if ($url.Length -gt $urlSpace) { $url = $url.Substring(0, $urlSpace-3) + "..." }
-                Write-Host $url -NoNewline -ForegroundColor Green
-                Write-Host (" " * ($urlSpace - $url.Length) + " │") -ForegroundColor $LabelColor
-            } else {
-                Write-Host "(vazio)$(' ' * ($urlSpace - 7))│" -ForegroundColor DarkGray
-            }
-        }
-    }
-    Write-BoxFooter -Color $LabelColor -Width 54
-    Write-Host ""
-}
+        Write-Info "Iniciando Vite em segundo plano..."
+        $command = "Set-Location -LiteralPath '$($PSScriptRoot.Replace("'", "''"))'; npm run dev -- --host 127.0.0.1"
+        Start-Process -FilePath "powershell.exe" -ArgumentList @("-NoExit", "-Command", $command) -WindowStyle Hidden | Out-Null
+        Start-Sleep -Seconds 3
 
-function Show-WipePreview {
-    param([string]$TargetType, [string]$WipeMode)
-    $total = 0
-    Write-Host "  Itens que serão afetados:" -ForegroundColor Yellow
-    Write-Host "  ───────────────────────────────────────────────────" -ForegroundColor DarkGray
-    foreach ($cat in $global:arrays.Values | Sort-Object Name) {
-        $items = Parse-PortfolioItems $cat.Name
-        $affected = $items | Where-Object { $_.Type -eq $TargetType }
-        if ($WipeMode -eq "url") { $affected = $affected | Where-Object { $_.MediaUrl } }
-        foreach ($item in $affected) {
-            $num = "[$($item.Index + 1)]"
-            $url = if ($item.MediaUrl) { $item.MediaUrl.Substring(0, [math]::Min($item.MediaUrl.Length, 50)) } else { "(vazio)" }
-            Write-Host "  $($cat.Label) $num" -NoNewline -ForegroundColor Red
-            Write-Host " → $url" -ForegroundColor DarkGray
-            $total++
-        }
-    }
-    Write-Host "  ───────────────────────────────────────────────────" -ForegroundColor DarkGray
-    return $total
-}
-
-function Exec-Wipe {
-    param([string]$TargetType, [string]$TypeLabel)
-    Write-Header "⚠  WIPE DE $($TypeLabel.ToUpper())"
-
-    Write-Host "  Escolha a ação de limpeza:" -ForegroundColor White
-    Write-Host "`n  [1] " -NoNewline -ForegroundColor Yellow; Write-Host "Zerar URLs" -NoNewline -ForegroundColor White; Write-Host "  — Remove mídias, mantém os cards" -ForegroundColor DarkGray
-    Write-Host "  [2] " -NoNewline -ForegroundColor Red;    Write-Host "Deletar Slots" -NoNewline -ForegroundColor White; Write-Host " — Apaga completamente da grade" -ForegroundColor DarkGray
-    Write-Host "  [0] " -NoNewline -ForegroundColor DarkGray; Write-Host "Cancelar" -ForegroundColor DarkGray
-
-    $wipeMode = Prompt-ChoiceKey "`n  Ação [1/2/0]:" @("1","2","0")
-    if ($wipeMode -eq "0") { return }
-
-    $mode = if ($wipeMode -eq "1") { "url" } else { "slot" }
-    $modeLabel = if ($mode -eq "url") { "Zerar URLs" } else { "Deletar Slots" }
-
-    Write-Host "`n`n  ╔════════════════════════════════════════════════════╗" -ForegroundColor Red
-    Write-Host "  ║  ⚠  ATENÇÃO: Ação irreversível!                    ║" -ForegroundColor Red
-    Write-Host "  ╚════════════════════════════════════════════════════╝`n" -ForegroundColor Red
-    
-    $total = Show-WipePreview -TargetType $TargetType -WipeMode $mode
-
-    if ($total -eq 0) {
-        Write-Warn "Nenhum item encontrado para esse tipo de limpeza."
-        Pause-Screen
-        return
-    }
-
-    Write-Host "`n  Ação  : " -NoNewline -ForegroundColor White; Write-Host $modeLabel -ForegroundColor Red
-    Write-Host "  Alvo  : " -NoNewline -ForegroundColor White; Write-Host "Todos os $total item(s) do tipo '$TypeLabel'" -ForegroundColor Red
-    Write-Host "`n  Para confirmar, aperte " -NoNewline -ForegroundColor White
-    Write-Host "S" -NoNewline -ForegroundColor Red
-    Write-Host " ou ENTER para cancelar." -ForegroundColor White
-    
-    $confirm = Prompt-ChoiceKey "" @("S", "ENTER")
-
-    if ($confirm -ne "S") {
-        Write-Warn "`nOperação cancelada."
-        Start-Sleep -Seconds 1
-        return
-    }
-
-    Write-Host "`n`n  Executando limpeza..." -ForegroundColor DarkGray
-    $count = 0
-    foreach ($cat in $global:arrays.Values) {
-        $items = Parse-PortfolioItems $cat.Name
-        if ($mode -eq "url") {
-            foreach ($item in $items) {
-                if ($item.Type -eq $TargetType -and $item.MediaUrl) {
-                    if (Set-ItemUrl -ArrayName $cat.Name -ItemIndex $item.Index -NewUrl "") { $count++ }
-                }
-            }
+        if (Test-PortOpen -Port 5173) {
+            Write-OK "Servidor iniciado em $url."
         } else {
-            for ($i = $items.Count - 1; $i -ge 0; $i--) {
-                if ($items[$i].Type -eq $TargetType) {
-                    if (Remove-PortfolioSlot -ArrayName $cat.Name -ItemIndex $i) { $count++ }
-                }
-            }
+            Write-Warn "O servidor foi iniciado, mas a porta 5173 ainda nao respondeu. Aguarde alguns segundos e tente abrir o preview."
         }
     }
 
-    Write-OK "$count item(s) limpos com sucesso."
-    $result = Deploy-Changes -CommitMessage "Wipe $TypeLabel ($modeLabel) via Manager v6.0"
-    if ($result) { $global:lastAction = "Wipe de $TypeLabel ($modeLabel) — $count itens" }
-    Pause-Screen
+    if (-not $NoBrowser) {
+        Start-Process $url | Out-Null
+        Write-OK "Navegador aberto."
+    }
 }
 
-function Select-Category {
-    Write-Host "`n  Selecione a galeria:" -ForegroundColor White
-    $keys = ($global:arrays.Keys | Sort-Object)
-    foreach ($key in $keys) {
-        $cat = $global:arrays[$key]
-        Write-Host "  [$key] $($cat.Label)" -ForegroundColor $cat.Color
+function Get-GitCurrentBranch {
+    Push-Location $PSScriptRoot
+    try {
+        $branch = (& git branch --show-current 2>$null).Trim()
+        if ([string]::IsNullOrWhiteSpace($branch)) {
+            return "main"
+        }
+        return $branch
+    } finally {
+        Pop-Location
     }
-    Write-Host "  [0] Voltar" -ForegroundColor DarkGray
-    $validKeys = $keys + "0"
-    $choice = Prompt-ChoiceKey "`n  Galeria:" $validKeys
-    if ($choice -eq "0") { return $null }
-    return $global:arrays[$choice]
 }
 
-while ($true) {
-    Write-Header
-    View-Stats
-
-    Write-BoxHeader -Title "Menu Principal" -Color "DarkGray" -Width 54
-    Write-Host "  │                                                    │" -ForegroundColor DarkGray
-    Write-Host "  │  [1] " -NoNewline -ForegroundColor DarkGray; Write-Host "Visão Geral      " -NoNewline -ForegroundColor White; Write-Host "Ver todas as mídias          │" -ForegroundColor DarkGray
-    Write-Host "  │  [2] " -NoNewline -ForegroundColor DarkGray; Write-Host "Trocar URL       " -NoNewline -ForegroundColor Yellow; Write-Host "Atualizar link de mídia      │" -ForegroundColor DarkGray
-    Write-Host "  │  [3] " -NoNewline -ForegroundColor DarkGray; Write-Host "Adicionar Mídia  " -NoNewline -ForegroundColor Green; Write-Host "Novo slot no site            │" -ForegroundColor DarkGray
-    Write-Host "  │  [4] " -NoNewline -ForegroundColor DarkGray; Write-Host "Remover Slot     " -NoNewline -ForegroundColor Red; Write-Host "Apagar um card               │" -ForegroundColor DarkGray
-    Write-Host "  │  [5] " -NoNewline -ForegroundColor DarkGray; Write-Host "Reordenar Mídias " -NoNewline -ForegroundColor Cyan; Write-Host "Mover itens na galeria       │" -ForegroundColor DarkGray
-    Write-Host "  │                                                    │" -ForegroundColor DarkGray
-    Write-Host "  │  [P] " -NoNewline -ForegroundColor DarkGray; Write-Host "Preview Local    " -NoNewline -ForegroundColor Magenta; Write-Host "Testar site (localhost)      │" -ForegroundColor DarkGray
-    Write-Host "  │  [D] " -NoNewline -ForegroundColor DarkGray; Write-Host "Deploy Automático" -NoNewline -ForegroundColor Green; Write-Host "Sincronizar com GitHub       │" -ForegroundColor DarkGray
-    Write-Host "  │                                                    │" -ForegroundColor DarkGray
-    Write-Host "  │  [W] " -NoNewline -ForegroundColor DarkGray; Write-Host "WIPE em Lote     " -NoNewline -ForegroundColor DarkYellow; Write-Host "Limpar Imagens/Vídeos        │" -ForegroundColor DarkGray
-    Write-Host "  │  [C] " -NoNewline -ForegroundColor DarkGray; Write-Host "Configurações    " -NoNewline -ForegroundColor Blue; Write-Host "Editar variáveis do site     │" -ForegroundColor DarkGray
-    Write-Host "  │                                                    │" -ForegroundColor DarkGray
-    
-    if (Test-Path $backupFile) {
-        Write-Host "  │  [U] " -NoNewline -ForegroundColor DarkGray; Write-Host "Desfazer (Undo)  " -NoNewline -ForegroundColor DarkRed; Write-Host "Restaurar backup anterior    │" -ForegroundColor DarkGray
-    } else {
-        Write-Host "  │                                                    │" -ForegroundColor DarkGray
+function Invoke-Deploy {
+    if (-not (Test-CommandAvailable "git")) {
+        throw "Git nao encontrado no PATH."
     }
-    
-    Write-Host "  │  [0] " -NoNewline -ForegroundColor DarkGray; Write-Host "Sair             " -NoNewline -ForegroundColor DarkGray; Write-Host "                             │" -ForegroundColor DarkGray
-    Write-Host "  │                                                    │" -ForegroundColor DarkGray
-    Write-BoxFooter -Color "DarkGray" -Width 54
 
-    $option = Prompt-ChoiceKey "`n  Opção:" @("1","2","3","4","5","P","D","W","C","U","0")
+    if (-not $NoBuild) {
+        $valid = Test-PortfolioData
+        if (-not $valid) {
+            throw "Validacao falhou. Deploy cancelado."
+        }
+        Invoke-NpmBuild
+    }
 
-    switch ($option) {
-        "1" {
-            Write-Header "Visão Geral — Todas as Mídias"
-            foreach ($key in ($global:arrays.Keys | Sort-Object)) {
-                $a = $global:arrays[$key]
-                View-Items -ArrayName $a.Name -Label $a.Label -LabelColor $a.Color
+    Push-Location $PSScriptRoot
+    try {
+        Write-Section "Deploy GitHub"
+        $status = & git status --short
+        if ([string]::IsNullOrWhiteSpace($status)) {
+            Write-Warn "Nenhuma alteracao local para commitar."
+        } else {
+            Write-Host "  Arquivos alterados:" -ForegroundColor DarkGray
+            $status | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
+
+            if (-not (Confirm-Action "Adicionar e commitar estas alteracoes?")) {
+                Write-Warn "Deploy cancelado antes do commit."
+                return
             }
-            Pause-Screen
+
+            & git add -A
+            if ($LASTEXITCODE -ne 0) { throw "git add falhou." }
+
+            $message = if ($CommitMessage) { $CommitMessage } else { "Update portfolio via manager v$script:ManagerVersion" }
+            & git commit -m $message
+            if ($LASTEXITCODE -ne 0) { throw "git commit falhou." }
+            Write-OK "Commit criado."
         }
 
-        "2" {
-            Write-Header "Trocar URL de Mídia"
-            $cat = Select-Category
-            if ($null -eq $cat) { continue }
-
-            Write-Header "Trocar URL — $($cat.Label)"
-            View-Items -ArrayName $cat.Name -Label $cat.Label -LabelColor $cat.Color
-
-            $items = Parse-PortfolioItems $cat.Name
-            if ($items.Count -eq 0) { Write-Warn "Galeria vazia."; Pause-Screen; continue }
-
-            $idx = (Prompt-Number "Número do item (0 = cancelar)" 0 $items.Count) - 1
-            if ($idx -lt 0) { continue }
-
-            $currentUrl = $items[$idx].MediaUrl
-            Write-Host "`n  URL atual: " -NoNewline -ForegroundColor DarkGray
-            if ($currentUrl) { Write-Host $currentUrl -ForegroundColor Green }
-            else { Write-Host "(nenhuma mídia)" -ForegroundColor DarkGray }
-            Write-Info "Deixe vazio + ENTER para remover a mídia (mantém o card)"
-            
-            Write-Host "  " -NoNewline
-            $newUrl = Read-Host "Nova URL"
-
-            if (Set-ItemUrl -ArrayName $cat.Name -ItemIndex $idx -NewUrl $newUrl) {
-                Write-OK "Mídia atualizada localmente."
-                $global:lastAction = "URL do item $($idx+1) alterada"
-            }
-            Pause-Screen
+        $branch = Get-GitCurrentBranch
+        if (Confirm-Action "Enviar branch '$branch' para origin?") {
+            & git push -u origin $branch
+            if ($LASTEXITCODE -ne 0) { throw "git push falhou." }
+            Write-OK "Push concluido. Site: $script:SiteUrl"
+        } else {
+            Write-Warn "Push cancelado."
         }
+    } finally {
+        Pop-Location
+    }
+}
 
-        "3" {
-            Write-Header "Adicionar Nova Mídia"
-            $cat = Select-Category
-            if ($null -eq $cat) { continue }
+function Show-Help {
+    Write-Header "Ajuda rapida"
+    Write-Host "  Uso interativo:" -ForegroundColor White
+    Write-Host "    .\manage-portfolio.ps1" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "  Comandos uteis:" -ForegroundColor White
+    Write-Host "    .\manage-portfolio.ps1 -Action Stats" -ForegroundColor DarkGray
+    Write-Host "    .\manage-portfolio.ps1 -Action List -Category art" -ForegroundColor DarkGray
+    Write-Host "    .\manage-portfolio.ps1 -Action Add -Category video -Type video -Url `"https://youtu.be/...`" -Layout wide" -ForegroundColor DarkGray
+    Write-Host "    .\manage-portfolio.ps1 -Action Update -Category art -Index 1 -Url `"https://.../image.png`"" -ForegroundColor DarkGray
+    Write-Host "    .\manage-portfolio.ps1 -Action Update -Category art -Index 1 -ClearUrl" -ForegroundColor DarkGray
+    Write-Host "    .\manage-portfolio.ps1 -Action Remove -Category nsfw -Index 2" -ForegroundColor DarkGray
+    Write-Host "    .\manage-portfolio.ps1 -Action Move -Category art -Index 3 -To 1" -ForegroundColor DarkGray
+    Write-Host "    .\manage-portfolio.ps1 -Action Validate" -ForegroundColor DarkGray
+    Write-Host "    .\manage-portfolio.ps1 -Action Build" -ForegroundColor DarkGray
+    Write-Host "    .\manage-portfolio.ps1 -Action Preview" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "  Seguranca:" -ForegroundColor White
+    Write-Host "    Use -DryRun para simular alteracoes. Backups ficam em src\.portfolio-backups." -ForegroundColor DarkGray
+}
 
-            Write-Host "`n  Tipo de conteúdo:" -ForegroundColor White
-            Write-Host "  [1] Imagem (PNG, JPG, Cloudinary...)" -ForegroundColor Yellow
-            Write-Host "  [2] Vídeo  (YouTube, TikTok, MP4...)" -ForegroundColor Cyan
-            $typeChoice = Prompt-ChoiceKey "`n  Tipo [1/2]:" @("1","2")
-            $type = if ($typeChoice -eq "2") { "video" } else { "image" }
+function Read-InteractiveType {
+    param(
+        [hashtable]$CategoryInfo,
+        [string]$MediaUrl
+    )
 
-            Write-Host "`n  " -NoNewline
-            $url = Read-Host "URL da mídia (vazio = card em branco)"
+    $detected = Get-MediaKindFromUrl $MediaUrl
+    $default = if ($detected -ne "unknown") {
+        if ($detected -eq "video") { "2" } else { "1" }
+    } elseif ($CategoryInfo.DefaultType -eq "video") { "2" } else { "1" }
 
-            $isDouble   = $false
-            $isVertical = $false
+    Write-Section "Tipo de conteudo"
+    Write-MenuItem -Key "1" -Title "Imagem" -Description "PNG, JPG, WEBP, Cloudinary image" -Color "Yellow"
+    Write-MenuItem -Key "2" -Title "Video" -Description "YouTube, TikTok, MP4, WebM" -Color "Cyan"
+    $choice = Read-Choice -Prompt "Tipo" -Options @("1", "2") -Default $default
+    return Normalize-ItemType -Value $choice -CategoryInfo $CategoryInfo -MediaUrl $MediaUrl
+}
 
-            # URL Smart Detection
-            if ($url -match "tiktok\.com") {
-                Write-Host "`n  TikTok detectado! Formatando layout vertical." -ForegroundColor Magenta
-                $isVertical = $true
-                if ($url -notmatch "autoplay=1") {
-                    if ($url -match "\?") { $url += "&autoplay=1&mute=1" } else { $url += "?autoplay=1&mute=1" }
+function Read-InteractiveLayout {
+    param([string]$MediaUrl)
+
+    $defaultLayout = Normalize-Layout -Value "auto" -MediaUrl $MediaUrl
+    $default = switch ($defaultLayout) {
+        "wide" { "H" }
+        "vertical" { "V" }
+        default { "N" }
+    }
+
+    Write-Section "Formato do card"
+    Write-MenuItem -Key "N" -Title "Normal" -Description "Card quadrado padrao" -Color "White"
+    Write-MenuItem -Key "H" -Title "Wide" -Description "Ocupa duas colunas; bom para YouTube" -Color "Cyan"
+    Write-MenuItem -Key "V" -Title "Vertical" -Description "Ocupa duas linhas; bom para TikTok/9:16" -Color "Magenta"
+
+    $choice = Read-Choice -Prompt "Formato" -Options @("N", "H", "V") -Default $default
+    return Normalize-Layout -Value $choice -MediaUrl $MediaUrl
+}
+
+function Invoke-AddFlow {
+    param([hashtable]$CategoryInfo)
+
+    Write-Header "Adicionar midia"
+    if ($null -eq $CategoryInfo) {
+        $CategoryInfo = Select-Category
+        if ($null -eq $CategoryInfo) { return }
+    }
+
+    Write-Host ""
+    Write-Host "  URL da midia (opcional): " -NoNewline -ForegroundColor White
+    $mediaUrl = (Read-Host).Trim()
+    $itemType = Read-InteractiveType -CategoryInfo $CategoryInfo -MediaUrl $mediaUrl
+    $layoutName = Read-InteractiveLayout -MediaUrl $mediaUrl
+
+    Add-PortfolioItem -CategoryInfo $CategoryInfo -ItemType $itemType -MediaUrl $mediaUrl -LayoutName $layoutName
+    $script:LastAction = "Adicionou item em $($CategoryInfo.Label)"
+}
+
+function Invoke-UpdateFlow {
+    param([hashtable]$CategoryInfo)
+
+    Write-Header "Atualizar URL"
+    if ($null -eq $CategoryInfo) {
+        $CategoryInfo = Select-Category
+        if ($null -eq $CategoryInfo) { return }
+    }
+
+    Show-Items -CategoryInfo $CategoryInfo
+    $items = @(Get-PortfolioItems -ArrayName $CategoryInfo.ArrayName)
+    if ($items.Count -eq 0) {
+        Write-Warn "Galeria vazia."
+        return
+    }
+
+    $itemIndex = Read-Number -Prompt "Numero do item (0 cancela)" -Min 0 -Max $items.Count
+    if ($itemIndex -eq 0) { return }
+
+    Write-Host ""
+    Write-Host "  URL atual: " -NoNewline -ForegroundColor DarkGray
+    Write-Host "$(Get-ShortUrl $items[$itemIndex - 1].MediaUrl 90)" -ForegroundColor Green
+    Write-Info "Deixe em branco para remover a midia mantendo o card."
+    Write-Host "  Nova URL: " -NoNewline -ForegroundColor White
+    $newUrl = Read-Host
+
+    Update-PortfolioItemUrl -CategoryInfo $CategoryInfo -OneBasedIndex $itemIndex -NewUrl $newUrl
+    $script:LastAction = "Atualizou URL em $($CategoryInfo.Label) #$itemIndex"
+}
+
+function Invoke-RemoveFlow {
+    param([hashtable]$CategoryInfo)
+
+    Write-Header "Remover slot"
+    if ($null -eq $CategoryInfo) {
+        $CategoryInfo = Select-Category
+        if ($null -eq $CategoryInfo) { return }
+    }
+
+    Show-Items -CategoryInfo $CategoryInfo
+    $items = @(Get-PortfolioItems -ArrayName $CategoryInfo.ArrayName)
+    if ($items.Count -eq 0) {
+        Write-Warn "Galeria vazia."
+        return
+    }
+
+    $itemIndex = Read-Number -Prompt "Numero do slot para remover (0 cancela)" -Min 0 -Max $items.Count
+    if ($itemIndex -eq 0) { return }
+
+    if (Confirm-Action "Remover definitivamente o slot #$itemIndex?") {
+        Remove-PortfolioItem -CategoryInfo $CategoryInfo -OneBasedIndex $itemIndex
+        $script:LastAction = "Removeu slot em $($CategoryInfo.Label) #$itemIndex"
+    }
+}
+
+function Invoke-MoveFlow {
+    param([hashtable]$CategoryInfo)
+
+    Write-Header "Reordenar midia"
+    if ($null -eq $CategoryInfo) {
+        $CategoryInfo = Select-Category
+        if ($null -eq $CategoryInfo) { return }
+    }
+
+    Show-Items -CategoryInfo $CategoryInfo
+    $items = @(Get-PortfolioItems -ArrayName $CategoryInfo.ArrayName)
+    if ($items.Count -lt 2) {
+        Write-Warn "Esta galeria precisa de pelo menos 2 itens."
+        return
+    }
+
+    $from = Read-Number -Prompt "Mover item numero (0 cancela)" -Min 0 -Max $items.Count
+    if ($from -eq 0) { return }
+
+    $target = Read-Number -Prompt "Nova posicao" -Min 1 -Max $items.Count
+    Move-PortfolioItem -CategoryInfo $CategoryInfo -FromIndex $from -ToIndex $target
+    $script:LastAction = "Moveu item em $($CategoryInfo.Label)"
+}
+
+function Invoke-RateFlow {
+    Write-Header "Taxa de cambio"
+    $content = Get-DataContent
+    $match = [regex]::Match($content, "export\s+const\s+exchangeRate\s*=\s*([\d\.]+);")
+    if ($match.Success) {
+        Write-Host "  Taxa atual: R$ $($match.Groups[1].Value)" -ForegroundColor Green
+    }
+
+    Write-Section "Como atualizar?"
+    Write-MenuItem -Key "1" -Title "Automatico" -Description "Busca USD/BRL e aplica taxa/desconto configurado" -Color "Cyan"
+    Write-MenuItem -Key "2" -Title "Manual" -Description "Digitar valor em reais" -Color "Yellow"
+    Write-MenuItem -Key "0" -Title "Voltar" -Description "Cancelar" -Color "DarkGray"
+
+    $choice = Read-Choice -Prompt "Opcao" -Options @("1", "2", "0")
+    if ($choice -eq "0") { return }
+
+    if ($choice -eq "1") {
+        Update-ExchangeRateFromApi
+        $script:LastAction = "Atualizou taxa por API"
+        return
+    }
+
+    Write-Host "  Nova taxa (ex: 5.75): " -NoNewline -ForegroundColor White
+    $raw = (Read-Host).Trim().Replace(",", ".")
+    $newRate = 0.0
+    if (-not [double]::TryParse($raw, [System.Globalization.NumberStyles]::Float, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$newRate)) {
+        throw "Valor invalido."
+    }
+
+    Set-ExchangeRate -NewRate $newRate
+    $script:LastAction = "Atualizou taxa manualmente"
+}
+
+function Invoke-WipeFlow {
+    Write-Header "Limpeza em lote"
+    Write-Section "Tipo de midia"
+    Write-MenuItem -Key "1" -Title "Imagens" -Description "Afeta apenas itens type: image" -Color "Yellow"
+    Write-MenuItem -Key "2" -Title "Videos" -Description "Afeta apenas itens type: video" -Color "Cyan"
+    Write-MenuItem -Key "0" -Title "Voltar" -Description "Cancelar" -Color "DarkGray"
+
+    $targetChoice = Read-Choice -Prompt "Tipo" -Options @("1", "2", "0")
+    if ($targetChoice -eq "0") { return }
+
+    Write-Section "Acao"
+    Write-MenuItem -Key "1" -Title "Zerar URLs" -Description "Mantem os cards e remove apenas os links" -Color "Yellow"
+    Write-MenuItem -Key "2" -Title "Deletar slots" -Description "Remove os cards da galeria" -Color "Red"
+    Write-MenuItem -Key "0" -Title "Voltar" -Description "Cancelar" -Color "DarkGray"
+
+    $modeChoice = Read-Choice -Prompt "Acao" -Options @("1", "2", "0")
+    if ($modeChoice -eq "0") { return }
+
+    $targetType = if ($targetChoice -eq "2") { "video" } else { "image" }
+    $mode = if ($modeChoice -eq "2") { "slots" } else { "url" }
+    Invoke-Wipe -TargetType $targetType -Mode $mode
+    $script:LastAction = "Executou wipe de $targetType"
+}
+
+function Invoke-Menu {
+    while ($true) {
+        Write-Header
+        Show-Stats
+
+        Write-Section "Conteudo"
+        Write-MenuItem -Key "1" -Title "Listar galerias" -Description "Ver todos os itens e URLs" -Color "White"
+        Write-MenuItem -Key "2" -Title "Trocar URL" -Description "Atualizar ou limpar midia de um card" -Color "Yellow"
+        Write-MenuItem -Key "3" -Title "Adicionar midia" -Description "Criar novo card com deteccao de tipo/layout" -Color "Green"
+        Write-MenuItem -Key "4" -Title "Remover slot" -Description "Apagar um card da galeria" -Color "Red"
+        Write-MenuItem -Key "5" -Title "Reordenar" -Description "Mover item para outra posicao" -Color "Cyan"
+
+        Write-Section "Site"
+        Write-MenuItem -Key "V" -Title "Validar dados" -Description "Checar URLs, tipos e estrutura" -Color "Green"
+        Write-MenuItem -Key "B" -Title "Build" -Description "Rodar npm run build" -Color "Cyan"
+        Write-MenuItem -Key "P" -Title "Preview local" -Description "Abrir Vite em localhost:5173" -Color "Magenta"
+        Write-MenuItem -Key "D" -Title "Deploy" -Description "Build, commit e push com confirmacao" -Color "Green"
+
+        Write-Section "Manutencao"
+        Write-MenuItem -Key "C" -Title "Cambio" -Description "Atualizar exchangeRate" -Color "Blue"
+        Write-MenuItem -Key "W" -Title "Wipe em lote" -Description "Limpar URLs ou slots por tipo" -Color "DarkYellow"
+        Write-MenuItem -Key "U" -Title "Desfazer" -Description "Restaurar ultimo backup" -Color "DarkRed"
+        Write-MenuItem -Key "H" -Title "Ajuda" -Description "Ver comandos por parametro" -Color "DarkGray"
+        Write-MenuItem -Key "0" -Title "Sair" -Description "Fechar o manager" -Color "DarkGray"
+        Write-Host ""
+
+        $option = Read-Choice -Prompt "Opcao" -Options @("1", "2", "3", "4", "5", "V", "B", "P", "D", "C", "W", "U", "H", "0")
+
+        try {
+            switch ($option) {
+                "1" {
+                    Write-Header "Todas as galerias"
+                    foreach ($cat in $script:Categories.Values) { Show-Items -CategoryInfo $cat }
+                    Pause-Screen
                 }
-            } elseif ($url -match "youtube\.com|youtu\.be") {
-                Write-Host "`n  YouTube detectado! Forçando HQ 720p." -ForegroundColor Red
-                if ($url -notmatch "vq=hd720") {
-                    if ($url -match "\?") { $url += "&vq=hd720" } else { $url += "?vq=hd720" }
-                }
-            }
-
-            if (-not $isVertical) {
-                Write-Host "`n  [H] Slot duplo (Horizontal)" -ForegroundColor DarkGray
-                Write-Host "  [V] Slot vertical (9:16)" -ForegroundColor Magenta
-                Write-Host "  [N] Slot normal (Quadrado)" -ForegroundColor DarkGray
-                $fmtChoice = Prompt-ChoiceKey "`n  Formato [H/V/N]:" @("H","V","N")
-                $isDouble   = ($fmtChoice -eq "H")
-                $isVertical = ($fmtChoice -eq "V")
-            }
-
-            if (Add-Item -ArrayName $cat.Name -Type $type -MediaUrl $url -Double $isDouble -Vertical $isVertical) {
-                Write-OK "`nMídia adicionada localmente."
-                $global:lastAction = "Nova mídia adicionada à galeria $($cat.Label)"
-            }
-            Pause-Screen
-        }
-
-        "4" {
-            Write-Header "Remover Slot de Mídia"
-            $cat = Select-Category
-            if ($null -eq $cat) { continue }
-
-            Write-Header "Remover — $($cat.Label)"
-            View-Items -ArrayName $cat.Name -Label $cat.Label -LabelColor $cat.Color
-
-            $items = Parse-PortfolioItems $cat.Name
-            if ($items.Count -eq 0) { Write-Warn "Galeria vazia."; Pause-Screen; continue }
-
-            $idx = (Prompt-Number "Número do slot para DELETAR (0 = cancelar)" 0 $items.Count) - 1
-            if ($idx -lt 0) { continue }
-
-            $confirm = Prompt-ChoiceKey "`n  Tem certeza? [S/N]:" @("S","N")
-            if ($confirm -eq "S") {
-                if (Remove-PortfolioSlot -ArrayName $cat.Name -ItemIndex $idx) {
-                    Write-OK "`nSlot removido localmente."
-                    $global:lastAction = "Slot $($idx+1) removido da galeria $($cat.Label)"
-                }
-            } else {
-                Write-Warn "`nCancelado."
-            }
-            Pause-Screen
-        }
-
-        "5" {
-            Write-Header "Reordenar Mídias"
-            $cat = Select-Category
-            if ($null -eq $cat) { continue }
-
-            Write-Header "Reordenar — $($cat.Label)"
-            View-Items -ArrayName $cat.Name -Label $cat.Label -LabelColor $cat.Color
-
-            $items = Parse-PortfolioItems $cat.Name
-            if ($items.Count -lt 2) { Write-Warn "Galeria precisa de no mínimo 2 itens."; Pause-Screen; continue }
-
-            $idx1 = (Prompt-Number "Número do item que deseja mover (0 = cancelar)" 0 $items.Count) - 1
-            if ($idx1 -lt 0) { continue }
-
-            $idx2 = (Prompt-Number "Para qual posição você quer movê-lo?" 1 $items.Count) - 1
-
-            if ($idx1 -eq $idx2) { Write-Warn "Posições iguais. Nenhuma mudança feita."; Pause-Screen; continue }
-
-            if (Move-ItemOrder -ArrayName $cat.Name -IndexA $idx1 -IndexB $idx2) {
-                Write-OK "Mídias reordenadas."
-                $global:lastAction = "Item movido para a posição $($idx2+1) na galeria $($cat.Label)"
-            }
-            Pause-Screen
-        }
-
-        "P" {
-            Write-Header "Preview Local (Modo Live)"
-            Write-Host "  Iniciando servidor de desenvolvimento local..." -ForegroundColor Cyan
-            Write-Info "  Isso abrirá uma janela do navegador."
-            Write-Info "  Você pode voltar para este terminal a qualquer momento."
-            Write-Host ""
-            
-            try {
-                Start-Process "powershell" -ArgumentList "-Command `"cd '$PSScriptRoot'; npm run dev`"" -WindowStyle Minimized
-                Start-Sleep -Seconds 2
-                Start-Process "http://localhost:5173"
-                Write-OK "Servidor iniciado! Confira o navegador."
-                $global:lastAction = "Servidor Preview iniciado"
-            } catch {
-                Write-Err "Erro ao iniciar o servidor: $_"
-            }
-            Pause-Screen
-        }
-
-        "D" {
-            Write-Header "Deploy Manual"
-            $result = Deploy-Changes
-            if ($result) { $global:lastAction = "Deploy manual executado" }
-            Pause-Screen
-        }
-
-        "W" {
-            Write-Header "Limpeza Geral (WIPE)"
-            Write-Host "  Qual tipo de mídia deseja limpar?" -ForegroundColor White
-            Write-Host "  [1] Imagens" -ForegroundColor Yellow
-            Write-Host "  [2] Vídeos" -ForegroundColor Cyan
-            Write-Host "  [0] Cancelar" -ForegroundColor DarkGray
-            $wipeChoice = Prompt-ChoiceKey "`n  Opção:" @("1","2","0")
-            if ($wipeChoice -eq "1") { Exec-Wipe -TargetType "image" -TypeLabel "Imagens" }
-            elseif ($wipeChoice -eq "2") { Exec-Wipe -TargetType "video" -TypeLabel "Vídeos" }
-        }
-
-        "C" {
-            Write-Header "Configurações do Site"
-            try {
-                $content = Get-DataContent
-                $rateMatch = [regex]::Match($content, "export const exchangeRate = ([\d\.]+);")
-
-                if ($rateMatch.Success) {
-                    $currentRate = $rateMatch.Groups[1].Value
-                    Write-Host "  Taxa de câmbio atual (USD → BRL): " -NoNewline -ForegroundColor White
-                    Write-Host "R$ $currentRate" -ForegroundColor Green
-
-                    Write-Host "`n  Como deseja atualizar a taxa?" -ForegroundColor White
-                    Write-Host "  [1] Auto-Update via API (Cotação USD Real + Taxa PayPal)" -ForegroundColor Cyan
-                    Write-Host "  [2] Digitar Manualmente" -ForegroundColor Yellow
-                    Write-Host "  [0] Cancelar" -ForegroundColor DarkGray
-                    $cChoice = Prompt-ChoiceKey "`n  Opção:" @("1","2","0")
-
-                    if ($cChoice -eq "0") { continue }
-
-                    $finalRate = ""
-
-                    if ($cChoice -eq "1") {
-                        Write-Host "`n  Buscando cotação em open.er-api.com..." -ForegroundColor DarkGray
-                        try {
-                            $resp = Invoke-RestMethod -Uri "https://open.er-api.com/v6/latest/USD" -Method Get
-                            $usdToBrl = $resp.rates.BRL
-                            if ($null -eq $usdToBrl) { throw "API não retornou a cotação." }
-                            Write-Host "  Cotação Comercial atual: " -NoNewline; Write-Host "R$ $usdToBrl" -ForegroundColor Green
-                            
-                            Write-Host "  " -NoNewline
-                            $feeInput = Read-Host "Taxa do PayPal em % (Padrão: 4.5)"
-                            if ([string]::IsNullOrWhiteSpace($feeInput)) { $feeInput = "4.5" }
-                            $feeInput = $feeInput.Replace(",", ".")
-                            
-                            if ($feeInput -match "^[\d\.]+$") {
-                                $feePerc = [double]$feeInput
-                                $finalDouble = $usdToBrl * (1 - ($feePerc / 100))
-                                $finalRate = [math]::Round($finalDouble, 2).ToString("0.00").Replace(",", ".")
-                                Write-Host "  " -NoNewline; Write-Host "Cotação com desconto PayPal aplicado: " -NoNewline; Write-Host "R$ $finalRate" -ForegroundColor Magenta
-                            } else {
-                                Write-Err "Porcentagem inválida."
-                            }
-                        } catch {
-                            Write-Err "Falha na API de cotação: $_"
-                        }
-                    } elseif ($cChoice -eq "2") {
-                        Write-Host "`n  " -NoNewline
-                        $manRate = Read-Host "Nova taxa (ex: 5.80)"
-                        if (-not [string]::IsNullOrWhiteSpace($manRate)) {
-                            $manRate = $manRate.Replace(",", ".")
-                            if ($manRate -match "^[\d\.]+$") { $finalRate = $manRate }
-                            else { Write-Err "Valor inválido." }
-                        }
+                "2" { Invoke-UpdateFlow; Pause-Screen }
+                "3" { Invoke-AddFlow; Pause-Screen }
+                "4" { Invoke-RemoveFlow; Pause-Screen }
+                "5" { Invoke-MoveFlow; Pause-Screen }
+                "V" { Write-Header "Validar dados"; Test-PortfolioData | Out-Null; Pause-Screen }
+                "B" { Write-Header "Build"; Invoke-NpmBuild; Pause-Screen }
+                "P" { Write-Header "Preview local"; Start-LocalPreview; Pause-Screen }
+                "D" { Write-Header "Deploy"; Invoke-Deploy; Pause-Screen }
+                "C" { Invoke-RateFlow; Pause-Screen }
+                "W" { Invoke-WipeFlow; Pause-Screen }
+                "U" {
+                    Write-Header "Desfazer"
+                    if (Confirm-Action "Restaurar o backup mais recente?") {
+                        Restore-LatestBackup | Out-Null
+                        $script:LastAction = "Restaurou backup"
                     }
-
-                    if (-not [string]::IsNullOrWhiteSpace($finalRate)) {
-                        Write-Host "`n  Salvar R$ $finalRate? [S/N] " -NoNewline -ForegroundColor White
-                        $saveConf = Prompt-ChoiceKey "" @("S", "N", "ENTER")
-                        if ($saveConf -eq "S") {
-                            Backup-Data
-                            $newContent = $content -replace "export const exchangeRate = [\d\.]+;", "export const exchangeRate = $finalRate;"
-                            Set-DataContent $newContent
-                            Write-OK "`nTaxa atualizada localmente para R$ $finalRate."
-                            $global:lastAction = "Taxa de câmbio atualizada → R$ $finalRate"
-                        } else {
-                            Write-Warn "`nCancelado."
-                        }
-                    }
-                } else {
-                    Write-Err "Variável 'exchangeRate' não encontrada em data.tsx."
+                    Pause-Screen
                 }
-            } catch {
-                Write-Err "Erro ao alterar configurações: $_"
-            }
-            Pause-Screen
-        }
-
-        "U" {
-            if (-not (Test-Path $backupFile)) { continue }
-            Write-Header "Desfazer Última Ação"
-            Write-Warn "Isso vai restaurar o arquivo data.tsx para o estado anterior à sua última modificação."
-            $confirm = Prompt-ChoiceKey "`n  Tem certeza? [S/N]:" @("S","N")
-            if ($confirm -eq "S") {
-                if (Restore-Data) {
-                    Write-OK "Restauração concluída! O estado anterior foi recuperado."
-                    $global:lastAction = "Backup Restaurado (Undo)"
-                    Remove-Item $backupFile -Force
-                } else {
-                    Write-Err "Falha ao restaurar."
+                "H" { Show-Help; Pause-Screen }
+                "0" {
+                    Write-Host ""
+                    Write-Host "  Fechado. Ate a proxima!" -ForegroundColor Magenta
+                    return
                 }
-            } else {
-                Write-Warn "Cancelado."
             }
+        } catch {
+            Write-Err $_.Exception.Message
             Pause-Screen
-        }
-
-        "0" {
-            Write-Host "`n  Até a próxima, Maka! ✨`n" -ForegroundColor Magenta
-            break
         }
     }
+}
+
+function Invoke-CommandAction {
+    $resolvedAction = Resolve-Action $Action
+
+    switch ($resolvedAction) {
+        "Menu" {
+            Invoke-Menu
+        }
+        "Help" {
+            Show-Help
+        }
+        "Stats" {
+            Show-Stats
+        }
+        "List" {
+            $cat = Resolve-Category $Category
+            if ($null -eq $cat) {
+                foreach ($entry in $script:Categories.Values) { Show-Items -CategoryInfo $entry }
+            } else {
+                Show-Items -CategoryInfo $cat
+            }
+        }
+        "Validate" {
+            $valid = Test-PortfolioData
+            if (-not $valid) { exit 1 }
+        }
+        "Build" {
+            $valid = Test-PortfolioData
+            if (-not $valid) { exit 1 }
+            Invoke-NpmBuild
+        }
+        "Preview" {
+            Start-LocalPreview
+        }
+        "Deploy" {
+            Invoke-Deploy
+        }
+        "Undo" {
+            if (-not (Confirm-Action "Restaurar o backup mais recente?")) {
+                Write-Warn "Operacao cancelada."
+                return
+            }
+            Restore-LatestBackup | Out-Null
+        }
+        "Add" {
+            $cat = Resolve-Category $Category
+            if ($null -eq $cat) { throw "Use -Category art, video ou nsfw." }
+            $itemType = Normalize-ItemType -Value $Type -CategoryInfo $cat -MediaUrl $Url
+            $layoutName = Normalize-Layout -Value $Layout -MediaUrl $Url
+            Add-PortfolioItem -CategoryInfo $cat -ItemType $itemType -MediaUrl $Url -LayoutName $layoutName
+        }
+        "Update" {
+            $cat = Resolve-Category $Category
+            if ($null -eq $cat) { throw "Use -Category art, video ou nsfw." }
+            if ($Index -le 0) { throw "Use -Index com o numero do item." }
+            $newUrl = if ($ClearUrl) { "" } else { $Url }
+            Update-PortfolioItemUrl -CategoryInfo $cat -OneBasedIndex $Index -NewUrl $newUrl
+        }
+        "Remove" {
+            $cat = Resolve-Category $Category
+            if ($null -eq $cat) { throw "Use -Category art, video ou nsfw." }
+            if ($Index -le 0) { throw "Use -Index com o numero do item." }
+            if (-not (Confirm-Action "Remover item #$Index de $($cat.Label)?")) {
+                Write-Warn "Operacao cancelada."
+                return
+            }
+            Remove-PortfolioItem -CategoryInfo $cat -OneBasedIndex $Index
+        }
+        "Move" {
+            $cat = Resolve-Category $Category
+            if ($null -eq $cat) { throw "Use -Category art, video ou nsfw." }
+            if ($Index -le 0 -or $To -le 0) { throw "Use -Index e -To." }
+            Move-PortfolioItem -CategoryInfo $cat -FromIndex $Index -ToIndex $To
+        }
+        "Wipe" {
+            if ([string]::IsNullOrWhiteSpace($Type)) { throw "Use -Type image ou video." }
+            Invoke-Wipe -TargetType $Type -Mode $WipeMode
+        }
+        "Rate" {
+            if ($Rate -gt 0) {
+                Set-ExchangeRate -NewRate $Rate
+            } else {
+                Update-ExchangeRateFromApi
+            }
+        }
+    }
+}
+
+try {
+    Invoke-CommandAction
+} catch {
+    Write-Err $_.Exception.Message
+    exit 1
 }
