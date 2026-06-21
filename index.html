@@ -1,39 +1,74 @@
 <!doctype html>
-<html lang="en" class="scroll-smooth">
+<html lang="pt-BR" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; media-src 'self' https:; font-src 'self' data:; connect-src 'self'; frame-src https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';" />
-    <meta name="referrer" content="strict-origin-when-cross-origin" />
-    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()" />
-    
-    <!-- Cache Control -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
-
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preload" as="image" href="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="MAKA - Commissions. Digital Art, Video Editing, and more. Comissões Abertas." />
-    <meta name="keywords" content="commissions, digital art, video editor, pixel art, vtuber" />
+    <meta name="theme-color" content="#f59e0b" />
+    <meta name="color-scheme" content="light dark" />
+    
+    <meta name="description" content="MAKA - Comissões de arte digital, ilustrações, pixel art, PNGTuber e skins Minecraft. Portfólio e preços. Comissões abertas!" />
+    <meta name="keywords" content="comissões, arte digital, ilustração, pixel art, vtuber, pngtuber, minecraft skin, fanart, comissionar arte" />
+    <meta name="author" content="MAKA" />
+    <meta name="robots" content="index, follow" />
+    
+    <link rel="canonical" href="https://diogoalbq.github.io/PortfolioMaka/" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.json" />
+    
+    <link rel="preconnect" href="https://images.unsplash.com" />
+    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <link rel="preload" as="image" href="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1600&q=80" />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" media="print" onload="this.media='all'" />
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="MAKA | Commissions" />
-    <meta property="og:description" content="Portfolio and Commission prices. Order your art today!" />
+    <meta property="og:url" content="https://diogoalbq.github.io/PortfolioMaka/" />
+    <meta property="og:title" content="MAKA | Comissões de Arte Digital" />
+    <meta property="og:description" content="Portfólio e preços de comissões. Ilustrações, Pixel Art, PNGTuber, Skins Minecraft e mais. Comissões abertas!" />
     <meta property="og:image" content="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:site_name" content="MAKA Portfolio" />
     
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:title" content="MAKA | Commissions" />
-    <meta property="twitter:description" content="Portfolio and Commission prices. Order your art today!" />
-    <meta property="twitter:image" content="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80" />
-
-    <title>MAKA | Commissions</title>
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="MAKA | Comissões de Arte Digital" />
+    <meta name="twitter:description" content="Portfólio e preços de comissões. Ilustrações, Pixel Art, PNGTuber, Skins Minecraft e mais." />
+    <meta name="twitter:image" content="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80" />
+    <meta name="twitter:creator" content="@TheMakasan" />
+    
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Artist",
+      "name": "MAKA",
+      "description": "Artist | Fan Dubber | Editor | Pixel Artist. Comissões de arte digital, ilustrações, pixel art, PNGTuber e skins Minecraft.",
+      "url": "https://diogoalbq.github.io/PortfolioMaka/",
+      "sameAs": [
+        "https://x.com/TheMakasan",
+        "https://www.instagram.com/makasanart/",
+        "https://www.tiktok.com/@themakasan",
+        "https://www.youtube.com/@TheMakasan"
+      ],
+      "knowsAbout": ["Digital Art", "Illustration", "Pixel Art", "Video Editing", "PNGTuber", "Minecraft Skins"],
+      "priceRange": "$25 - $80",
+      "currenciesAccepted": "USD, BRL",
+      "paymentAccepted": "PayPal, Pix",
+      "areaServed": "Worldwide"
+    }
+    </script>
+    
+    <title>MAKA | Comissões de Arte Digital</title>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

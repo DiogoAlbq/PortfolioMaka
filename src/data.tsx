@@ -1,4 +1,3 @@
-import { Palette, Video, Image as ImageIcon } from 'lucide-react';
 import React from 'react';
 
 export const exchangeRate = 5.75;
@@ -228,37 +227,133 @@ export const t = {
             }
         },
         contact: { title: "Vamos Trabalhar Juntos", subtitle: "Preencha o formulário abaixo com os detalhes do seu projeto e retornarei em até 48 horas.", name: "Seu Nome / Nickname", email: "Seu Email", projectType: "Tipo de Projeto", details: "Detalhes do Projeto", projectPlaceholder: "Descreva sua ideia, forneça links de referência e detalhes importantes...", btn: "Enviar Solicitação" },
-        nsfwModal: { title: "Aviso de Conteúdo NSFW", message: "Este conteúdo possui material Not Safe For Work (explicíto). Você tem mais de 18 anos e deseja prosseguir?", confirm: "Sim, tenho +18", cancel: "Voltar" },
+        nsfwModal: { title: "Aviso de Conteúdo NSFW", message: "Este conteúdo possui material Not Safe For Work (explícito). Você tem mais de 18 anos e deseja prosseguir?", confirm: "Sim, tenho +18", cancel: "Voltar" },
         footer: "Todos os direitos reservados.",
         toast: { success: "Detalhes copiados!\nCole a mensagem na DM do artista.", greeting: "Olá, Maka! Vim do seu site! Tudo bem? Espero que sim!\nGostaria de uma comissão com esses detalhes:", plan: "Plano", basePrice: "Valor Base", addons: "Adicionais", total: "Valor Estimado" }
     }
 };
 
 export interface PortfolioItem {
-  type: string;
+  type: 'image' | 'video';
   color: string;
   iconColor: string;
-  icon: React.JSX.Element;
+  icon: React.ReactNode;
   double?: boolean;
   vertical?: boolean;
   mediaUrl?: string;
 }
 
+const ImageIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+    <circle cx="8.5" cy="8.5" r="1.5" />
+    <polyline points="21 15 16 10 5 21" />
+  </svg>
+);
+
+const VideoIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10">
+    <polygon points="23 7 16 12 23 17 23 7" />
+    <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+  </svg>
+);
+
 export const artItems: PortfolioItem[] = [
-  
-  ];
+  {
+    type: 'image',
+    color: 'from-amber-200 to-yellow-200 dark:from-amber-900/50 dark:to-yellow-900/50',
+    iconColor: 'text-amber-600 dark:text-amber-400',
+    icon: <ImageIcon />,
+    double: true,
+    mediaUrl: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    type: 'image',
+    color: 'from-orange-200 to-amber-200 dark:from-orange-900/50 dark:to-amber-900/50',
+    iconColor: 'text-orange-600 dark:text-orange-400',
+    icon: <ImageIcon />,
+    mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    type: 'image',
+    color: 'from-yellow-200 to-amber-200 dark:from-yellow-900/50 dark:to-amber-900/50',
+    iconColor: 'text-yellow-600 dark:text-yellow-400',
+    icon: <ImageIcon />,
+    vertical: true,
+    mediaUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    type: 'image',
+    color: 'from-amber-100 to-yellow-100 dark:from-amber-900/40 dark:to-yellow-900/40',
+    iconColor: 'text-amber-700 dark:text-amber-300',
+    icon: <ImageIcon />,
+    mediaUrl: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    type: 'image',
+    color: 'from-orange-100 to-amber-100 dark:from-orange-900/40 dark:to-amber-900/40',
+    iconColor: 'text-orange-700 dark:text-orange-300',
+    icon: <ImageIcon />,
+    double: true,
+    mediaUrl: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    type: 'image',
+    color: 'from-yellow-100 to-amber-100 dark:from-yellow-900/40 dark:to-amber-900/40',
+    iconColor: 'text-yellow-700 dark:text-yellow-300',
+    icon: <ImageIcon />,
+    mediaUrl: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1200&q=80'
+  }
+];
 
 export const videoItems: PortfolioItem[] = [
-  
-  ];
+  {
+    type: 'video',
+    color: 'from-red-200 to-orange-200 dark:from-red-900/50 dark:to-orange-900/50',
+    iconColor: 'text-red-600 dark:text-red-400',
+    icon: <VideoIcon />,
+    mediaUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+  },
+  {
+    type: 'video',
+    color: 'from-orange-200 to-red-200 dark:from-orange-900/50 dark:to-red-900/50',
+    iconColor: 'text-orange-600 dark:text-orange-400',
+    icon: <VideoIcon />,
+    vertical: true,
+    mediaUrl: 'https://www.tiktok.com/@themakasan/video/1234567890'
+  },
+  {
+    type: 'video',
+    color: 'from-red-100 to-orange-100 dark:from-red-900/40 dark:to-orange-900/40',
+    iconColor: 'text-red-700 dark:text-red-300',
+    icon: <VideoIcon />,
+    double: true,
+    mediaUrl: 'https://www.youtube.com/watch?v=example'
+  }
+];
 
 export const nsfwItems: PortfolioItem[] = [
-  
-  ];
+  {
+    type: 'image',
+    color: 'from-red-200 to-rose-200 dark:from-red-900/50 dark:to-rose-900/50',
+    iconColor: 'text-red-600 dark:text-red-400',
+    icon: <ImageIcon />,
+    mediaUrl: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    type: 'image',
+    color: 'from-rose-200 to-pink-200 dark:from-rose-900/50 dark:to-pink-900/50',
+    iconColor: 'text-rose-600 dark:text-rose-400',
+    icon: <ImageIcon />,
+    vertical: true,
+    mediaUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80'
+  }
+];
 
 export const heroBgImages = [
-  "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=1200&q=80"
+  "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1600&q=80",
+  "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=1600&q=80",
+  "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1600&q=80",
+  "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=1600&q=80",
+  "https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1600&q=80"
 ];

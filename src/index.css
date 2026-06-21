@@ -1,9 +1,115 @@
 @import "tailwindcss";
 
-body {
-  cursor: url('/cursor.png') 10 10, auto;
+@theme {
+  --color-amber-50: #fffbeb;
+  --color-amber-100: #fef3c7;
+  --color-amber-200: #fde68a;
+  --color-amber-300: #fcd34d;
+  --color-amber-400: #fbbf24;
+  --color-amber-500: #f59e0b;
+  --color-amber-600: #d97706;
+  --color-amber-700: #b45309;
+  --color-amber-800: #92400e;
+  --color-amber-900: #78350f;
+  --color-amber-950: #451a03;
 }
 
-a, button, [role="button"] {
-  cursor: url('/cursor.png') 10 10, pointer;
+@layer base {
+  :root {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  ::selection {
+    background-color: #fef08a;
+    color: #78350f;
+  }
+  
+  .dark ::selection {
+    background-color: #fef08a;
+    color: #fef3c7;
+  }
+  
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #d97706;
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: #b45309;
+  }
+  
+  .dark ::-webkit-scrollbar-thumb {
+    background: #f59e0b;
+  }
+  
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: #fbbf24;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .animate-in {
+    animation: animateIn 0.5s ease-out forwards;
+  }
+  
+  @keyframes animateIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .dark .glass {
+    background: rgba(15, 23, 42, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .shadow-3d {
+    box-shadow: 8px 8px 0px #1e293b;
+  }
+  
+  .dark .shadow-3d {
+    box-shadow: 8px 8px 0px #020617;
+  }
+  
+  .shadow-3d-hover:hover {
+    box-shadow: 12px 12px 0px #1e293b;
+    transform: translate(-4px, -4px);
+  }
+  
+  .dark .shadow-3d-hover:hover {
+    box-shadow: 12px 12px 0px #020617;
+  }
 }

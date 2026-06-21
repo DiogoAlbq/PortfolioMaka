@@ -1,0 +1,36 @@
+{
+  "name": "MAKA | Comissões de Arte Digital",
+  "short_name": "MAKA Portfolio",
+  "description": "Portfólio e preços de comissões. Ilustrações, Pixel Art, PNGTuber, Skins Minecraft e mais.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fefce8",
+  "theme_color": "#f59e0b",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["art", "design", "entertainment"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Ver Serviços",
+      "short_name": "Serviços",
+      "description": "Ver preços e serviços de comissão",
+      "url": "/#pricing",
+      "icons": [{ "src": "/favicon.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Portfólio",
+      "short_name": "Portfólio",
+      "description": "Ver trabalhos recentes",
+      "url": "/#portfolio",
+      "icons": [{ "src": "/favicon.svg", "sizes": "192x192" }]
+    }
+  ]
+}
