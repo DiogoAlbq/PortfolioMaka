@@ -145,7 +145,7 @@ export default function App() {
 
         <Portfolio
           theme={theme}
-          t={tLang.portfolio}
+          t={tLang}
           activeTab={activePortfolioTab}
           setActiveTab={setActivePortfolioTab}
           portfolioItems={portfolioItems}
@@ -159,7 +159,7 @@ export default function App() {
 
         <Pricing
           theme={theme}
-          t={tLang.pricing}
+          t={tLang}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           pricingPlans={tLang.pricingPlans}
@@ -169,11 +169,11 @@ export default function App() {
           isDarkMode={isDarkMode}
         />
 
-        <TOS theme={theme} t={tLang.tos} />
+        <TOS theme={theme} t={tLang} />
 
         <Footer
           theme={theme}
-          t={tLang.footer}
+          t={tLang}
           isDarkMode={isDarkMode}
           handleNsfwClick={handleNsfwClick}
         />
@@ -183,7 +183,7 @@ export default function App() {
         isOpen={nsfwDialogOpen}
         onClose={() => setNsfwDialogOpen(false)}
         onConfirm={confirmNsfw}
-        t={tLang.nsfwModal}
+        t={tLang}
         theme={theme}
         isDarkMode={isDarkMode}
       />
