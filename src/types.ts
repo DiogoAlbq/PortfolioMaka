@@ -137,6 +137,12 @@ export interface PortfolioItem {
   mediaUrl?: string;
 }
 
+export interface SocialItem {
+  platform: 'twitter' | 'instagram' | 'tiktok' | 'youtube' | 'other';
+  url: string;
+  nsfw?: boolean;
+}
+
 export interface ThemeColors {
   bg: string;
   navBg: string;

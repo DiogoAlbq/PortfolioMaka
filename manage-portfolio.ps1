@@ -40,6 +40,24 @@ $script:LastAction = ""
 $script:Utf8NoBom = New-Object System.Text.UTF8Encoding $false
 
 $script:Categories = [ordered]@{
+    hero = @{
+        Key = "hero"
+        Kind = "portfolio"
+        ArrayName = "heroBgImages"
+        Label = "Carrossel inicial"
+        Hint = "Imagens de fundo do inicio do site"
+        Color = "Magenta"
+        DefaultType = "image"
+    }
+    social = @{
+        Key = "social"
+        Kind = "portfolio"
+        ArrayName = "socialItems"
+        Label = "Redes Sociais"
+        Hint = "Links para X, Instagram, TikTok, etc."
+        Color = "Blue"
+        DefaultType = "image"
+    }
     art = @{
         Key = "art"
         ArrayName = "artItems"
@@ -243,6 +261,8 @@ function Resolve-Action {
         "validate" = "Validate"
         "validar" = "Validate"
         "deploy" = "Deploy"
+        "forcedeploy" = "ForceDeploy"
+        "forçar" = "ForceDeploy"
         "undo" = "Undo"
         "desfazer" = "Undo"
         "help" = "Help"
@@ -276,8 +296,15 @@ function Resolve-Category {
         "3" { return $script:Categories.nsfw }
         "nsfw" { return $script:Categories.nsfw }
         "18" { return $script:Categories.nsfw }
-        "nsfwitems" { return $script:Categories.nsfw }
-        default { throw "Categoria invalida: '$Value'. Use art, video ou nsfw." }
+        "nsfw" { return $script:Categories.nsfw }
+        "4" { return $script:Categories.hero }
+        "carrossel" { return $script:Categories.hero }
+        "carousel" { return $script:Categories.hero }
+        "herobgimages" { return $script:Categories.hero }
+        "5" { return $script:Categories.social }
+        "social" { return $script:Categories.social }
+        "socialitems" { return $script:Categories.social }
+        default { throw "Categoria invalida: '$Value'. Use art, video, nsfw, carousel ou social." }
     }
 }
 
@@ -285,11 +312,18 @@ function Select-Category {
     Write-Section "Escolha uma galeria"
     foreach ($entry in $script:Categories.GetEnumerator()) {
         $cat = $entry.Value
-        Write-MenuItem -Key ($(if ($cat.Key -eq "art") { "1" } elseif ($cat.Key -eq "video") { "2" } else { "3" })) -Title $cat.Label -Description $cat.Hint -Color $cat.Color
+        $key = switch ($cat.Key) {
+            "art" { "1" }
+            "video" { "2" }
+            "nsfw" { "3" }
+            "hero" { "4" }
+            "social" { "5" }
+        }
+        Write-MenuItem -Key $key -Title $cat.Label -Description $cat.Hint -Color $cat.Color
     }
     Write-MenuItem -Key "0" -Title "Voltar" -Description "Cancelar esta acao" -Color "DarkGray"
 
-    $choice = Read-Choice -Prompt "Galeria" -Options @("1", "2", "3", "0")
+    $choice = Read-Choice -Prompt "Galeria" -Options @("1", "2", "3", "4", "5", "0")
     if ($choice -eq "0") {
         return $null
     }
@@ -395,7 +429,7 @@ function Get-ArraySection {
     )
 
     $escapedName = [regex]::Escape($ArrayName)
-    $pattern = "(?s)(export\s+const\s+$escapedName\s*:\s*PortfolioItem\[\]\s*=\s*\[)(.*?)(\r?\n?\s*\];)"
+    $pattern = "(?s)(export\s+const\s+$escapedName\s*:\s*(?:PortfolioItem|SocialItem)\[\]\s*=\s*\[)(.*?)(\r?\n?\s*\];)"
     $match = [regex]::Match($Content, $pattern)
     if (-not $match.Success) {
         throw "Array '$ArrayName' nao encontrado em src/data.tsx."
@@ -500,22 +534,44 @@ function Get-PortfolioItems {
 
     foreach ($range in $ranges) {
         $raw = $section.Body.Substring($range.Start, $range.Length)
-        $typeValue = Get-QuotedProperty -Raw $raw -Name "type"
-        $color = Get-QuotedProperty -Raw $raw -Name "color"
-        $iconColor = Get-QuotedProperty -Raw $raw -Name "iconColor"
-        $mediaUrl = Get-QuotedProperty -Raw $raw -Name "mediaUrl"
+        
+        if ($ArrayName -eq "socialItems") {
+            $platform = Get-QuotedProperty -Raw $raw -Name "platform"
+            $url = Get-QuotedProperty -Raw $raw -Name "url"
+            $nsfw = ($raw -match "\bnsfw\s*:\s*true\b")
+            
+            $items.Add([PSCustomObject]@{
+                Index = $index
+                Type = "image"
+                Color = ""
+                IconColor = ""
+                Double = $false
+                Vertical = $false
+                MediaUrl = $url
+                Platform = $platform
+                Url = $url
+                Nsfw = $nsfw
+                Raw = $raw
+                ArrayName = $ArrayName
+            }) | Out-Null
+        } else {
+            $typeValue = Get-QuotedProperty -Raw $raw -Name "type"
+            $color = Get-QuotedProperty -Raw $raw -Name "color"
+            $iconColor = Get-QuotedProperty -Raw $raw -Name "iconColor"
+            $mediaUrl = Get-QuotedProperty -Raw $raw -Name "mediaUrl"
 
-        $items.Add([PSCustomObject]@{
-            Index = $index
-            Type = $typeValue
-            Color = $color
-            IconColor = $iconColor
-            Double = ($raw -match "\bdouble\s*:\s*true\b")
-            Vertical = ($raw -match "\bvertical\s*:\s*true\b")
-            MediaUrl = $mediaUrl
-            Raw = $raw
-            ArrayName = $ArrayName
-        }) | Out-Null
+            $items.Add([PSCustomObject]@{
+                Index = $index
+                Type = $typeValue
+                Color = $color
+                IconColor = $iconColor
+                Double = ($raw -match "\bdouble\s*:\s*true\b")
+                Vertical = ($raw -match "\bvertical\s*:\s*true\b")
+                MediaUrl = $mediaUrl
+                Raw = $raw
+                ArrayName = $ArrayName
+            }) | Out-Null
+        }
 
         $index++
     }
@@ -552,6 +608,16 @@ function Get-DefaultStyle {
 
 function Format-PortfolioItem {
     param([object]$Item)
+
+    if ($Item.ArrayName -eq "socialItems") {
+        $parts = New-Object System.Collections.ArrayList
+        $parts.Add("platform: '$(Escape-TsString $Item.Platform)'") | Out-Null
+        $parts.Add("url: '$(Escape-TsString $Item.Url)'") | Out-Null
+        if ($Item.Nsfw) {
+            $parts.Add("nsfw: true") | Out-Null
+        }
+        return "  { $($parts -join ', ') },"
+    }
 
     $typeValue = if ($Item.Type -eq "video") { "video" } else { "image" }
     $color = if ($Item.Color) { $Item.Color } else { "from-amber-200 to-yellow-200" }
@@ -810,11 +876,16 @@ function Add-PortfolioItem {
         [hashtable]$CategoryInfo,
         [string]$ItemType,
         [string]$MediaUrl,
-        [string]$LayoutName
+        [string]$LayoutName,
+        [string]$Platform = "other",
+        [bool]$Nsfw = $false
     )
 
     $items = @(Get-PortfolioItems -ArrayName $CategoryInfo.ArrayName)
     $newItem = New-PortfolioItemObject -CategoryInfo $CategoryInfo -ItemType $ItemType -MediaUrl $MediaUrl -LayoutName $LayoutName
+    $newItem | Add-Member -MemberType NoteProperty -Name "Platform" -Value $Platform -Force
+    $newItem | Add-Member -MemberType NoteProperty -Name "Url" -Value $MediaUrl -Force
+    $newItem | Add-Member -MemberType NoteProperty -Name "Nsfw" -Value $Nsfw -Force
     $items += $newItem
 
     Set-PortfolioItems -ArrayName $CategoryInfo.ArrayName -Items $items -Reason "add-$($CategoryInfo.Key)"
@@ -1143,6 +1214,8 @@ function Get-GitCurrentBranch {
 }
 
 function Invoke-Deploy {
+    param([switch]$Force)
+
     if (-not (Test-CommandAvailable "git")) {
         throw "Git nao encontrado no PATH."
     }
@@ -1150,7 +1223,8 @@ function Invoke-Deploy {
     if (-not $NoBuild) {
         $valid = Test-PortfolioData
         if (-not $valid) {
-            throw "Validacao falhou. Deploy cancelado."
+            if ($Force) { Write-Warn "Validacao falhou, mas continuando (Force Deploy)." }
+            else { throw "Validacao falhou. Deploy cancelado." }
         }
         Invoke-NpmBuild
     }
@@ -1161,11 +1235,18 @@ function Invoke-Deploy {
         $status = & git status --short
         if ([string]::IsNullOrWhiteSpace($status)) {
             Write-Warn "Nenhuma alteracao local para commitar."
+            if ($Force) {
+                Write-Info "Criando commit vazio para forcar deploy..."
+                & git commit --allow-empty -m "Force deploy via manager"
+                if ($LASTEXITCODE -ne 0) { throw "git commit vazio falhou." }
+            } else {
+                return
+            }
         } else {
             Write-Host "  Arquivos alterados:" -ForegroundColor DarkGray
             $status | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
 
-            if (-not (Confirm-Action "Adicionar e commitar estas alteracoes?")) {
+            if (-not $Force -and -not (Confirm-Action "Adicionar e commitar estas alteracoes?")) {
                 Write-Warn "Deploy cancelado antes do commit."
                 return
             }
@@ -1174,14 +1255,20 @@ function Invoke-Deploy {
             if ($LASTEXITCODE -ne 0) { throw "git add falhou." }
 
             $message = if ($CommitMessage) { $CommitMessage } else { "Update portfolio via manager v$script:ManagerVersion" }
+            if ($Force -and -not $CommitMessage) { $message = "Force deploy: $message" }
             & git commit -m $message
             if ($LASTEXITCODE -ne 0) { throw "git commit falhou." }
             Write-OK "Commit criado."
         }
 
         $branch = Get-GitCurrentBranch
-        if (Confirm-Action "Enviar branch '$branch' para origin?") {
-            & git push -u origin $branch
+        if ($Force -or (Confirm-Action "Enviar branch '$branch' para origin?")) {
+            if ($Force) {
+                Write-Info "Fazendo force push para origin $branch..."
+                & git push -u origin $branch --force
+            } else {
+                & git push -u origin $branch
+            }
             if ($LASTEXITCODE -ne 0) { throw "git push falhou." }
             Write-OK "Push concluido. Site: $script:SiteUrl"
         } else {
@@ -1262,10 +1349,33 @@ function Invoke-AddFlow {
     Write-Host ""
     Write-Host "  URL da midia (opcional): " -NoNewline -ForegroundColor White
     $mediaUrl = (Read-Host).Trim()
-    $itemType = Read-InteractiveType -CategoryInfo $CategoryInfo -MediaUrl $mediaUrl
-    $layoutName = Read-InteractiveLayout -MediaUrl $mediaUrl
 
-    Add-PortfolioItem -CategoryInfo $CategoryInfo -ItemType $itemType -MediaUrl $mediaUrl -LayoutName $layoutName
+    if ($CategoryInfo.Key -eq "social") {
+        $platform = "other"
+        if ($mediaUrl -match "x\.com|twitter\.com") { $platform = "twitter" }
+        elseif ($mediaUrl -match "instagram\.com") { $platform = "instagram" }
+        elseif ($mediaUrl -match "tiktok\.com") { $platform = "tiktok" }
+        elseif ($mediaUrl -match "youtube\.com|youtu\.be") { $platform = "youtube" }
+        
+        Write-Section "Plataforma"
+        Write-MenuItem -Key "1" -Title "Twitter / X" -Description "" -Color "Cyan"
+        Write-MenuItem -Key "2" -Title "Instagram" -Description "" -Color "Magenta"
+        Write-MenuItem -Key "3" -Title "TikTok" -Description "" -Color "White"
+        Write-MenuItem -Key "4" -Title "YouTube" -Description "" -Color "Red"
+        Write-MenuItem -Key "5" -Title "Outro" -Description "" -Color "Yellow"
+        
+        $defChoice = switch ($platform) { "twitter" { "1" }; "instagram" { "2" }; "tiktok" { "3" }; "youtube" { "4" }; default { "5" } }
+        $choice = Read-Choice -Prompt "Plataforma" -Options @("1", "2", "3", "4", "5") -Default $defChoice
+        $platform = switch ($choice) { "1" { "twitter" }; "2" { "instagram" }; "3" { "tiktok" }; "4" { "youtube" }; default { "other" } }
+        
+        $nsfw = Confirm-Action -Message "Conteudo NSFW (18+)?"
+        Add-PortfolioItem -CategoryInfo $CategoryInfo -ItemType "image" -MediaUrl $mediaUrl -LayoutName "normal" -Platform $platform -Nsfw $nsfw
+    } else {
+        $itemType = Read-InteractiveType -CategoryInfo $CategoryInfo -MediaUrl $mediaUrl
+        $layoutName = Read-InteractiveLayout -MediaUrl $mediaUrl
+        Add-PortfolioItem -CategoryInfo $CategoryInfo -ItemType $itemType -MediaUrl $mediaUrl -LayoutName $layoutName
+    }
+
     $script:LastAction = "Adicionou item em $($CategoryInfo.Label)"
 }
 
@@ -1422,6 +1532,7 @@ function Invoke-Menu {
         Write-MenuItem -Key "B" -Title "Build" -Description "Rodar npm run build" -Color "Cyan"
         Write-MenuItem -Key "P" -Title "Preview local" -Description "Abrir Vite em localhost:5173" -Color "Magenta"
         Write-MenuItem -Key "D" -Title "Deploy" -Description "Build, commit e push com confirmacao" -Color "Green"
+        Write-MenuItem -Key "F" -Title "Force Deploy" -Description "Forcar total (ignora validacao, cria commit vazio, usa --force)" -Color "Red"
 
         Write-Section "Manutencao"
         Write-MenuItem -Key "C" -Title "Cambio" -Description "Atualizar exchangeRate" -Color "Blue"
@@ -1431,7 +1542,7 @@ function Invoke-Menu {
         Write-MenuItem -Key "0" -Title "Sair" -Description "Fechar o manager" -Color "DarkGray"
         Write-Host ""
 
-        $option = Read-Choice -Prompt "Opcao" -Options @("1", "2", "3", "4", "5", "V", "B", "P", "D", "C", "W", "U", "H", "0")
+        $option = Read-Choice -Prompt "Opcao" -Options @("1", "2", "3", "4", "5", "V", "B", "P", "D", "F", "C", "W", "U", "H", "0")
 
         try {
             switch ($option) {
@@ -1448,6 +1559,7 @@ function Invoke-Menu {
                 "B" { Write-Header "Build"; Invoke-NpmBuild; Pause-Screen }
                 "P" { Write-Header "Preview local"; Start-LocalPreview; Pause-Screen }
                 "D" { Write-Header "Deploy"; Invoke-Deploy; Pause-Screen }
+                "F" { Write-Header "Force Deploy"; Invoke-Deploy -Force; Pause-Screen }
                 "C" { Invoke-RateFlow; Pause-Screen }
                 "W" { Invoke-WipeFlow; Pause-Screen }
                 "U" {
@@ -1507,6 +1619,9 @@ function Invoke-CommandAction {
         }
         "Deploy" {
             Invoke-Deploy
+        }
+        "ForceDeploy" {
+            Invoke-Deploy -Force
         }
         "Undo" {
             if (-not (Confirm-Action "Restaurar o backup mais recente?")) {

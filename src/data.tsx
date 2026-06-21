@@ -243,6 +243,12 @@ export interface PortfolioItem {
   mediaUrl?: string;
 }
 
+export interface SocialItem {
+  platform: 'twitter' | 'instagram' | 'tiktok' | 'youtube' | 'other';
+  url: string;
+  nsfw?: boolean;
+}
+
 const ImageIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10">
     <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
@@ -261,6 +267,7 @@ const VideoIcon = () => (
 export const artItems: PortfolioItem[] = [
   { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon />, mediaUrl: 'https://res.cloudinary.com/dnbdnjpd4/image/upload/v1781970379/3_1_kz6hnq.png' },
   { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon />, mediaUrl: 'https://res.cloudinary.com/dnbdnjpd4/image/upload/v1781967545/Tame_gkh52r.png' },
+  { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon />, mediaUrl: 'https://res.cloudinary.com/dnbdnjpd4/image/upload/v1781970122/photo_2026-06-20_12-38-13_no3ei0.jpg' },
 ];
 
 export const videoItems: PortfolioItem[] = [
@@ -269,10 +276,18 @@ export const videoItems: PortfolioItem[] = [
 export const nsfwItems: PortfolioItem[] = [
   ];
 
-export const heroBgImages = [
-  "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1600&q=80",
-  "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=1600&q=80",
-  "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1600&q=80",
-  "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=1600&q=80",
-  "https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1600&q=80"
+export const heroBgImages: PortfolioItem[] = [
+  { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon />, mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1600&q=80' },
+  { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon />, mediaUrl: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=1600&q=80' },
+  { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon />, mediaUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1600&q=80' },
+  { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon />, mediaUrl: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=1600&q=80' },
+  { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon />, mediaUrl: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1600&q=80' }
+];
+
+export const socialItems: SocialItem[] = [
+  { platform: 'twitter', url: 'https://x.com/TheMakasan' },
+  { platform: 'twitter', url: 'https://x.com/TheMakasanNSFW', nsfw: true },
+  { platform: 'instagram', url: 'https://www.instagram.com/makasanart/?hl=pt' },
+  { platform: 'tiktok', url: 'https://www.tiktok.com/@themakasan' },
+  { platform: 'youtube', url: 'https://www.youtube.com/@TheMakasan' }
 ];
