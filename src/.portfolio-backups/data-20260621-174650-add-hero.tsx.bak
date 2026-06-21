@@ -278,7 +278,6 @@ export const nsfwItems: PortfolioItem[] = [
 
 export const heroBgImages: PortfolioItem[] = [
   { type: 'video', color: 'from-orange-200 to-yellow-200', iconColor: 'text-orange-600', icon: <VideoIcon />, double: true, mediaUrl: '0' },
-  { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon />, double: true, mediaUrl: 'https://res.cloudinary.com/dnbdnjpd4/image/upload/v1782073812/240baae40e099ee988e06de4a6dcb2b0_pco2th.jpg' },
 ];
 
 export const socialItems: SocialItem[] = [
