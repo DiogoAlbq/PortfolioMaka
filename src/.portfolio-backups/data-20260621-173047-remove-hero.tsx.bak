@@ -278,6 +278,8 @@ export const nsfwItems: PortfolioItem[] = [
 ];
 
 export const heroBgImages: PortfolioItem[] = [
+  { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon />, mediaUrl: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=1600&q=80' },
+  { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon />, mediaUrl: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1600&q=80' },
   { type: 'video', color: 'from-orange-200 to-yellow-200', iconColor: 'text-orange-600', icon: <VideoIcon />, double: true, mediaUrl: 'https://res.cloudinary.com/dnbdnjpd4/video/upload/v1782073820/ssstwitter.com_1781395618946_zroyjk.mp4' },
 ];
 
