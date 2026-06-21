@@ -137,7 +137,7 @@ export default function App() {
       <main className="relative z-10 w-full h-full">
         <Hero
           theme={theme}
-          t={tLang.hero}
+          t={tLang}
           heroBgImages={heroBgImages}
           heroBgIndex={heroBgIndex}
           isDarkMode={isDarkMode}
