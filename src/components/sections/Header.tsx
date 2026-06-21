@@ -64,16 +64,14 @@ export function Header({
             <a href="#pricing" className={`transition-colors ${theme.navLink}`}>{t.nav.services}</a>
             <a href="#tos" className={`transition-colors ${theme.navLink}`}>{t.nav.terms}</a>
 
-            <div className={`relative flex items-center p-1 rounded-full border-2 ml-4 ${
-              isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-900/10 shadow-sm'
-            }`}>
+            <div className={`relative flex items-center p-1 rounded-full border-2 ml-4 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-900/10 shadow-sm'
+              }`}>
               <button
                 onClick={() => handleLanguageChange('PT', 'BRL')}
-                className={`relative px-4 py-1.5 text-xs font-bold rounded-full transition-colors duration-200 z-10 flex items-center gap-1.5 ${
-                  language === 'PT'
-                    ? 'text-slate-950 font-black'
-                    : isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-600 hover:text-slate-900'
-                }`}
+                className={`relative px-4 py-1.5 text-xs font-bold rounded-full transition-colors duration-200 z-10 flex items-center gap-1.5 ${language === 'PT'
+                  ? 'text-slate-950 font-black'
+                  : isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-600 hover:text-slate-900'
+                  }`}
               >
                 {language === 'PT' && (
                   <motion.span
@@ -87,11 +85,10 @@ export function Header({
               </button>
               <button
                 onClick={() => handleLanguageChange('EN', 'USD')}
-                className={`relative px-4 py-1.5 text-xs font-bold rounded-full transition-colors duration-200 z-10 flex items-center gap-1.5 ${
-                  language === 'EN'
-                    ? 'text-slate-950 font-black'
-                    : isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-600 hover:text-slate-900'
-                }`}
+                className={`relative px-4 py-1.5 text-xs font-bold rounded-full transition-colors duration-200 z-10 flex items-center gap-1.5 ${language === 'EN'
+                  ? 'text-slate-950 font-black'
+                  : isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-600 hover:text-slate-900'
+                  }`}
               >
                 {language === 'EN' && (
                   <motion.span
@@ -130,7 +127,7 @@ export function Header({
           {isMobileMenuOpen && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
+              animate={{ opacity: 50, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               className="md:hidden border-b border-white bg-white/90 backdrop-blur-xl overflow-hidden"
             >
@@ -141,16 +138,14 @@ export function Header({
                 <a href="#tos" onClick={() => setIsMobileMenuOpen(false)} className={`py-2 w-fit ${theme.navLink}`}>{t.nav.terms}</a>
                 <div className="py-2 border-t border-slate-900/10 dark:border-white/10 mt-2">
                   <p className={`text-xs uppercase tracking-wider mb-2 opacity-60 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Idioma / Language</p>
-                  <div className={`relative flex items-center p-1 rounded-full border-2 w-fit ${
-                    isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-900/10 shadow-sm'
-                  }`}>
+                  <div className={`relative flex items-center p-1 rounded-full border-2 w-fit ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-900/10 shadow-sm'
+                    }`}>
                     <button
                       onClick={() => handleLanguageChange('PT', 'BRL')}
-                      className={`relative px-4 py-1.5 text-xs font-bold rounded-full transition-colors duration-200 z-10 flex items-center gap-1.5 ${
-                        language === 'PT'
-                          ? 'text-slate-950 font-black'
-                          : isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-600 hover:text-slate-900'
-                      }`}
+                      className={`relative px-4 py-1.5 text-xs font-bold rounded-full transition-colors duration-200 z-10 flex items-center gap-1.5 ${language === 'PT'
+                        ? 'text-slate-950 font-black'
+                        : isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-600 hover:text-slate-900'
+                        }`}
                     >
                       {language === 'PT' && (
                         <motion.span
@@ -164,11 +159,10 @@ export function Header({
                     </button>
                     <button
                       onClick={() => handleLanguageChange('EN', 'USD')}
-                      className={`relative px-4 py-1.5 text-xs font-bold rounded-full transition-colors duration-200 z-10 flex items-center gap-1.5 ${
-                        language === 'EN'
-                          ? 'text-slate-950 font-black'
-                          : isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-600 hover:text-slate-900'
-                      }`}
+                      className={`relative px-4 py-1.5 text-xs font-bold rounded-full transition-colors duration-200 z-10 flex items-center gap-1.5 ${language === 'EN'
+                        ? 'text-slate-950 font-black'
+                        : isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-600 hover:text-slate-900'
+                        }`}
                     >
                       {language === 'EN' && (
                         <motion.span
