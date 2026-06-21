@@ -267,6 +267,7 @@ const VideoIcon = () => (
 export const artItems: PortfolioItem[] = [
   { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon />, mediaUrl: 'https://res.cloudinary.com/dnbdnjpd4/image/upload/v1781970379/3_1_kz6hnq.png' },
   { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon />, mediaUrl: 'https://res.cloudinary.com/dnbdnjpd4/image/upload/v1782072072/Tame_Optimized_vbjvhz.png' },
+  { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon />, mediaUrl: 'https://www.instagram.com/p/DP96hdDEuXK/?hl=pt' },
 ];
 
 export const videoItems: PortfolioItem[] = [
