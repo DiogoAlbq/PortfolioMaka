@@ -289,5 +289,5 @@ export const socialItems: SocialItem[] = [
   { platform: 'twitter', url: 'https://x.com/TheMakasanNSFW', nsfw: true },
   { platform: 'instagram', url: 'https://www.instagram.com/makasanart/?hl=pt' },
   { platform: 'tiktok', url: 'https://www.tiktok.com/@themakasan' },
-  { platform: 'youtube', url: 'https://www.youtube.com/@TheMakasan' }
+  { platform: 'youtube', url: 'https://www.youtube.com/@TheMakasan' },
 ];

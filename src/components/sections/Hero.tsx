@@ -10,9 +10,10 @@ interface HeroProps {
   heroBgImages: PortfolioItem[];
   heroBgIndex: number;
   isDarkMode: boolean;
+  handleNsfwClick: (e: React.MouseEvent<HTMLAnchorElement>, url: string) => void;
 }
 
-export function Hero({ theme, t, heroBgImages, heroBgIndex, isDarkMode }: HeroProps) {
+export function Hero({ theme, t, heroBgImages, heroBgIndex, isDarkMode, handleNsfwClick }: HeroProps) {
   const getSocialIcon = (platform: SocialItem['platform'], isNsfw?: boolean) => {
     switch (platform) {
       case 'twitter':
@@ -91,7 +92,7 @@ export function Hero({ theme, t, heroBgImages, heroBgIndex, isDarkMode }: HeroPr
           {socialItems.map((item, idx) => {
             if (item.nsfw) {
               return (
-                <a key={idx} href={item.url} target="_blank" rel="noopener noreferrer" title={`${item.platform} NSFW`} className={`p-3 border-2 rounded-xl transition-all shadow-sm hover:shadow-md backdrop-blur-sm relative overflow-hidden flex items-center justify-center ${theme.socialBtn}`}>
+                <a key={idx} href={item.url} onClick={(e) => handleNsfwClick(e, item.url)} title={`${item.platform} NSFW`} className={`p-3 border-2 rounded-xl transition-all shadow-sm hover:shadow-md backdrop-blur-sm relative overflow-hidden flex items-center justify-center ${theme.socialBtn}`}>
                   <div className="absolute inset-x-0 bottom-0 top-0 opacity-10 bg-red-500 rounded-lg pointer-events-none"></div>
                   {getSocialIcon(item.platform, true)}
                   <span className="sr-only">NSFW {item.platform}</span>

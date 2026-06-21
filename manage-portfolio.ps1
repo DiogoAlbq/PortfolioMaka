@@ -1113,8 +1113,8 @@ function Test-PortfolioData {
         Write-Warn $warning
     }
 
-    foreach ($error in $errors) {
-        Write-Err $error
+    foreach ($err in $errors) {
+        Write-Err $err
     }
 
     if ($errors.Count -eq 0) {

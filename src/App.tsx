@@ -141,6 +141,7 @@ export default function App() {
           heroBgImages={heroBgImages}
           heroBgIndex={heroBgIndex}
           isDarkMode={isDarkMode}
+          handleNsfwClick={handleNsfwClick}
         />
 
         <Portfolio
