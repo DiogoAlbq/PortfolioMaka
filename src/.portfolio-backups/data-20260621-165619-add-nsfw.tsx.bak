@@ -273,8 +273,7 @@ export const videoItems: PortfolioItem[] = [
 ];
 
 export const nsfwItems: PortfolioItem[] = [
-  { type: 'image', color: 'from-red-200 to-rose-200', iconColor: 'text-red-600', icon: <ImageIcon />, mediaUrl: 'https://res.cloudinary.com/dnbdnjpd4/image/upload/v1781970122/photo_2026-06-20_12-38-13_no3ei0.jpg' },
-];
+  ];
 
 export const heroBgImages: PortfolioItem[] = [
   { type: 'image', color: 'from-amber-200 to-yellow-200', iconColor: 'text-amber-600', icon: <ImageIcon />, mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1600&q=80' },
